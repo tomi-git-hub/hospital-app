@@ -3,17 +3,85 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hospital Management</title>
+<title>Hospital Management - Test</title>
 <style>
-  body { font-family: Arial, sans-serif; background: #f1f5f9; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-  .card { background: white; padding: 32px; border-radius: 16px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-  h1 { color: #2563eb; margin: 0 0 8px; }
+  body { font-family: Arial, sans-serif; background: #f1f5f9; margin: 0; padding: 20px; display: flex; justify-content: center; }
+  .card { background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+  h1 { color: #2563eb; font-size: 22px; margin: 0 0 16px; }
+  input { width: 100%; box-sizing: border-box; padding: 14px; margin-bottom: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 16px; }
+  button { width: 100%; padding: 14px; border: 0; border-radius: 10px; background: #2563eb; color: white; font-size: 16px; font-weight: bold; }
+  #msg { margin-top: 16px; padding: 12px; border-radius: 10px; display: none; font-size: 15px; word-break: break-word; }
+  .ok { background: #dcfce7; color: #166534; }
+  .bad { background: #fee2e2; color: #991b1b; }
 </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Hospital Management</h1>
-    <p>Test page is working.</p>
+<div class="card">
+  <h1>Hospital Management - Login Test</h1>
+  <div id="loginBox">
+    <input id="email" type="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+    <button id="loginBtn">Log in</button>
   </div>
+  <div id="outBox" style="display:none">
+    <button id="logoutBtn">Log out</button>
+  </div>
+  <div id="msg"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAZXTl8iB6fYYSVDbce5RuQQdjlxpoF5g4",
+  authDomain: "hospital-management-c2daf.firebaseapp.com",
+  databaseURL: "https://hospital-management-c2daf-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "hospital-management-c2daf",
+  storageBucket: "hospital-management-c2daf.firebasestorage.app",
+  messagingSenderId: "259642607062",
+  appId: "1:259642607062:web:bc154b13936a1a1d8bd077"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+const msg = document.getElementById("msg");
+function show(text, good) {
+  msg.style.display = "block";
+  msg.className = good ? "ok" : "bad";
+  msg.textContent = text;
+}
+
+document.getElementById("loginBtn").onclick = async () => {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  show("Please wait...", true);
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    show("Login worked. Now reading database...", true);
+    const snap = await get(ref(db, "users/" + cred.user.uid));
+    if (snap.exists()) {
+      const u = snap.val();
+      show("SUCCESS! Login and database both work. Name: " + u.name + " | Role: " + u.role + " | Active: " + u.active, true);
+      document.getElementById("loginBox").style.display = "none";
+      document.getElementById("outBox").style.display = "block";
+    } else {
+      show("Login worked, but no user record found in the database.", false);
+    }
+  } catch (e) {
+    show("ERROR: " + e.code + " - " + e.message, false);
+  }
+};
+
+document.getElementById("logoutBtn").onclick = async () => {
+  await signOut(auth);
+  document.getElementById("loginBox").style.display = "block";
+  document.getElementById("outBox").style.display = "none";
+  msg.style.display = "none";
+};
+</script>
 </body>
 </html>

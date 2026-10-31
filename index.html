@@ -2,36 +2,150 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hospital Management - Test</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<title>Hospital Management</title>
 <style>
-  body { font-family: Arial, sans-serif; background: #f1f5f9; margin: 0; padding: 20px; display: flex; justify-content: center; }
-  .card { background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-  h1 { color: #2563eb; font-size: 22px; margin: 0 0 16px; }
-  input { width: 100%; box-sizing: border-box; padding: 14px; margin-bottom: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 16px; }
-  button { width: 100%; padding: 14px; border: 0; border-radius: 10px; background: #2563eb; color: white; font-size: 16px; font-weight: bold; }
-  #msg { margin-top: 16px; padding: 12px; border-radius: 10px; display: none; font-size: 15px; word-break: break-word; }
-  .ok { background: #dcfce7; color: #166534; }
-  .bad { background: #fee2e2; color: #991b1b; }
+  :root {
+    --blue: #2563eb;
+    --blue-dark: #1d4ed8;
+    --bg: #f1f5f9;
+    --text: #0f172a;
+    --muted: #64748b;
+    --purple: #7c3aed;
+    --green: #16a34a;
+    --doctor: #2563eb;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body { font-family: Arial, Helvetica, sans-serif; background: var(--bg); color: var(--text); }
+  .hidden { display: none !important; }
+
+  /* Splash */
+  #splash { position: fixed; inset: 0; background: linear-gradient(160deg, #2563eb, #1e40af); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+  .logo { width: 84px; height: 84px; border-radius: 24px; background: white; color: var(--blue); display: flex; align-items: center; justify-content: center; font-size: 52px; font-weight: bold; box-shadow: 0 8px 30px rgba(0,0,0,0.25); }
+  #splash h1 { margin: 18px 0 6px; font-size: 24px; }
+  #splash p { margin: 0 0 28px; opacity: 0.85; font-size: 14px; }
+  .spinner { width: 34px; height: 34px; border: 4px solid rgba(255,255,255,0.35); border-top-color: white; border-radius: 50%; animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Login */
+  #loginView { min-height: 100%; display: flex; flex-direction: column; background: linear-gradient(160deg, #2563eb, #1e40af); }
+  .login-top { padding: 48px 24px 28px; text-align: center; color: white; }
+  .login-top .logo { margin: 0 auto 14px; width: 72px; height: 72px; font-size: 44px; border-radius: 20px; }
+  .login-top h1 { margin: 0 0 4px; font-size: 24px; }
+  .login-top p { margin: 0; opacity: 0.85; font-size: 14px; }
+  .login-card { background: white; border-radius: 28px 28px 0 0; padding: 28px 22px 32px; flex: 1; }
+  .login-card h2 { margin: 0 0 18px; font-size: 20px; }
+  label { display: block; font-size: 13px; font-weight: bold; color: var(--muted); margin: 0 0 6px; }
+  input { width: 100%; padding: 15px; margin-bottom: 16px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 16px; background: #f8fafc; }
+  input:focus { outline: 2px solid var(--blue); background: white; }
+  .btn { width: 100%; padding: 16px; border: 0; border-radius: 12px; background: var(--blue); color: white; font-size: 16px; font-weight: bold; }
+  .btn:active { background: var(--blue-dark); }
+  .btn:disabled { opacity: 0.6; }
+  #loginMsg { margin-top: 16px; padding: 12px; border-radius: 12px; background: #fee2e2; color: #991b1b; font-size: 14px; display: none; word-break: break-word; }
+  .link-row { margin-top: 22px; text-align: center; font-size: 13px; color: var(--muted); }
+
+  /* App */
+  #appView { min-height: 100%; }
+  header { position: sticky; top: 0; z-index: 20; background: var(--blue); color: white; display: flex; align-items: center; gap: 12px; padding: 12px 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
+  #menuBtn { background: rgba(255,255,255,0.18); border: 0; color: white; width: 44px; height: 44px; border-radius: 12px; font-size: 22px; }
+  #pageTitle { flex: 1; font-size: 18px; font-weight: bold; }
+  .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; color: white; font-size: 12px; font-weight: bold; text-transform: capitalize; }
+  .role-admin { background: var(--purple); }
+  .role-receptionist { background: var(--green); }
+  .role-doctor { background: var(--doctor); }
+  header .pill { border: 2px solid rgba(255,255,255,0.7); }
+  main { padding: 16px; max-width: 800px; margin: 0 auto; }
+
+  /* Drawer */
+  #overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.5); z-index: 40; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  #overlay.open { opacity: 1; pointer-events: auto; }
+  #drawer { position: fixed; top: 0; bottom: 0; left: 0; width: 82%; max-width: 310px; background: white; z-index: 50; transform: translateX(-100%); transition: transform 0.2s; display: flex; flex-direction: column; }
+  #drawer.open { transform: translateX(0); }
+  .drawer-head { background: linear-gradient(160deg, #2563eb, #1e40af); color: white; padding: 28px 18px 18px; }
+  .avatar { width: 54px; height: 54px; border-radius: 50%; background: white; color: var(--blue); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+  .drawer-head .name { font-size: 18px; font-weight: bold; margin-bottom: 6px; word-break: break-word; }
+  .drawer-head .pill { border: 2px solid rgba(255,255,255,0.8); }
+  #menuList { flex: 1; overflow-y: auto; padding: 10px; }
+  .menu-item { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px; border: 0; background: none; border-radius: 12px; font-size: 16px; color: var(--text); text-align: left; }
+  .menu-item .ico { font-size: 20px; width: 26px; text-align: center; }
+  .menu-item.active { background: #dbeafe; color: var(--blue-dark); font-weight: bold; }
+  .drawer-foot { padding: 12px 10px 18px; border-top: 1px solid #e2e8f0; }
+  .logout { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px; border: 0; background: #fee2e2; color: #991b1b; border-radius: 12px; font-size: 16px; font-weight: bold; }
+
+  /* Cards */
+  .card { background: white; border-radius: 18px; padding: 18px; margin-bottom: 14px; box-shadow: 0 2px 12px rgba(15,23,42,0.07); }
+  .welcome { background: linear-gradient(160deg, #2563eb, #1e40af); color: white; }
+  .welcome h2 { margin: 0 0 4px; font-size: 22px; word-break: break-word; }
+  .welcome p { margin: 0 0 12px; opacity: 0.9; font-size: 14px; }
+  .welcome .pill { border: 2px solid rgba(255,255,255,0.8); }
+  .section-title { font-size: 15px; font-weight: bold; color: var(--muted); margin: 18px 4px 10px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .tile { background: white; border: 0; border-radius: 18px; padding: 18px 12px; text-align: center; box-shadow: 0 2px 12px rgba(15,23,42,0.07); font-size: 14px; font-weight: bold; color: var(--text); }
+  .tile .ico { display: block; font-size: 30px; margin-bottom: 8px; }
+  .soon { text-align: center; padding: 30px 18px; }
+  .soon .ico { font-size: 52px; }
+  .soon h3 { margin: 10px 0 6px; }
+  .soon p { margin: 0; color: var(--muted); font-size: 14px; }
+
+  #toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: #0f172a; color: white; padding: 12px 18px; border-radius: 12px; font-size: 14px; z-index: 200; display: none; max-width: 90%; text-align: center; }
 </style>
 </head>
 <body>
-<div class="card">
-  <h1>Hospital Management - Login Test</h1>
-  <div id="loginBox">
-    <input id="email" type="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Password">
-    <button id="loginBtn">Log in</button>
-  </div>
-  <div id="outBox" style="display:none">
-    <button id="logoutBtn">Log out</button>
-  </div>
-  <div id="msg"></div>
+
+<div id="splash">
+  <div class="logo">+</div>
+  <h1>Hospital Management</h1>
+  <p>Please wait...</p>
+  <div class="spinner"></div>
 </div>
+
+<div id="loginView" class="hidden">
+  <div class="login-top">
+    <div class="logo">+</div>
+    <h1>Hospital Management</h1>
+    <p>Staff login</p>
+  </div>
+  <div class="login-card">
+    <h2>Welcome back</h2>
+    <label for="email">Email</label>
+    <input id="email" type="email" autocomplete="username" placeholder="you@example.com">
+    <label for="password">Password</label>
+    <input id="password" type="password" autocomplete="current-password" placeholder="Your password">
+    <button id="loginBtn" class="btn">Log in</button>
+    <div id="loginMsg"></div>
+    <div class="link-row">Ask the Admin if you do not have a login.</div>
+  </div>
+</div>
+
+<div id="appView" class="hidden">
+  <header>
+    <button id="menuBtn" aria-label="Open menu">&#9776;</button>
+    <div id="pageTitle">Dashboard</div>
+    <span id="headRole" class="pill"></span>
+  </header>
+  <main id="content"></main>
+
+  <div id="overlay"></div>
+  <aside id="drawer">
+    <div class="drawer-head">
+      <div class="avatar" id="avatar">A</div>
+      <div class="name" id="drawerName"></div>
+      <span id="drawerRole" class="pill"></span>
+    </div>
+    <div id="menuList"></div>
+    <div class="drawer-foot">
+      <button id="logoutBtn" class="logout"><span>&#128682;</span> Log out</button>
+    </div>
+  </aside>
+</div>
+
+<div id="toast"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
@@ -48,40 +162,244 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
-const msg = document.getElementById("msg");
-function show(text, good) {
-  msg.style.display = "block";
-  msg.className = good ? "ok" : "bad";
-  msg.textContent = text;
+const ALL = ["admin", "receptionist", "doctor"];
+const MENU = [
+  { id: "dashboard",    label: "Dashboard",         icon: "\u{1F3E0}", roles: ALL },
+  { id: "appointments", label: "Appointments",      icon: "\u{1F4C5}", roles: ALL },
+  { id: "patients",     label: "Patients",          icon: "\u{1F9D1}", roles: ALL },
+  { id: "followups",    label: "Follow-ups",        icon: "\u{1F501}", roles: ["admin", "receptionist"] },
+  { id: "doctors",      label: "Doctors",           icon: "\u{1FA7A}", roles: ["admin"] },
+  { id: "departments",  label: "Departments",       icon: "\u{1F3E2}", roles: ["admin"] },
+  { id: "tokens",       label: "Token Management",  icon: "\u{1F3AB}", roles: ALL },
+  { id: "payments",     label: "Payments",          icon: "\u{1F4B0}", roles: ["admin", "receptionist"] },
+  { id: "slips",        label: "Appointment Slips", icon: "\u{1F9FE}", roles: ["admin", "receptionist"] },
+  { id: "staff",        label: "Staff Management",  icon: "\u{1F465}", roles: ["admin"] },
+  { id: "reports",      label: "Reports",           icon: "\u{1F4CA}", roles: ["admin"] },
+  { id: "settings",     label: "Settings",          icon: "\u2699\uFE0F", roles: ["admin"] }
+];
+
+const $ = (id) => document.getElementById(id);
+let me = null;            // { uid, name, role }
+let navStack = [];        // pages we visited
+let drawerOpen = false;
+let pendingMsg = "";
+
+/* ---------- small helpers ---------- */
+function toast(text) {
+  const t = $("toast");
+  t.textContent = text;
+  t.style.display = "block";
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { t.style.display = "none"; }, 2500);
+}
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+function setRolePill(el, role) {
+  el.className = "pill role-" + role;
+  el.textContent = cap(role);
+}
+function menuForRole(role) { return MENU.filter((m) => m.roles.includes(role)); }
+
+/* ---------- views ---------- */
+function showSplash() {
+  $("splash").classList.remove("hidden");
+}
+function hideSplash() {
+  $("splash").classList.add("hidden");
+}
+function showLogin() {
+  me = null;
+  navStack = [];
+  drawerOpen = false;
+  $("appView").classList.add("hidden");
+  $("loginView").classList.remove("hidden");
+  $("loginBtn").disabled = false;
+  $("loginBtn").textContent = "Log in";
+  const box = $("loginMsg");
+  if (pendingMsg) {
+    box.textContent = pendingMsg;
+    box.style.display = "block";
+    pendingMsg = "";
+  } else {
+    box.style.display = "none";
+  }
+  hideSplash();
+}
+function showApp() {
+  $("loginView").classList.add("hidden");
+  $("appView").classList.remove("hidden");
+  setRolePill($("headRole"), me.role);
+  setRolePill($("drawerRole"), me.role);
+  $("drawerName").textContent = me.name;
+  $("avatar").textContent = me.name.charAt(0).toUpperCase();
+  buildMenu();
+  navStack = ["dashboard"];
+  render("dashboard");
+  history.replaceState({ s: 0 }, "");
+  history.pushState({ s: 1 }, "");
+  hideSplash();
 }
 
-document.getElementById("loginBtn").onclick = async () => {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
-  show("Please wait...", true);
-  try {
-    const cred = await signInWithEmailAndPassword(auth, email, password);
-    show("Login worked. Now reading database...", true);
-    const snap = await get(ref(db, "users/" + cred.user.uid));
-    if (snap.exists()) {
-      const u = snap.val();
-      show("SUCCESS! Login and database both work. Name: " + u.name + " | Role: " + u.role + " | Active: " + u.active, true);
-      document.getElementById("loginBox").style.display = "none";
-      document.getElementById("outBox").style.display = "block";
-    } else {
-      show("Login worked, but no user record found in the database.", false);
-    }
-  } catch (e) {
-    show("ERROR: " + e.code + " - " + e.message, false);
+/* ---------- menu ---------- */
+function buildMenu() {
+  const list = $("menuList");
+  list.innerHTML = "";
+  menuForRole(me.role).forEach((m) => {
+    const b = document.createElement("button");
+    b.className = "menu-item";
+    b.dataset.page = m.id;
+    b.innerHTML = '<span class="ico">' + m.icon + "</span><span>" + m.label + "</span>";
+    b.onclick = () => navigate(m.id);
+    list.appendChild(b);
+  });
+}
+function highlightMenu(page) {
+  document.querySelectorAll(".menu-item").forEach((b) => {
+    b.classList.toggle("active", b.dataset.page === page);
+  });
+}
+
+/* ---------- drawer + back button ---------- */
+function openDrawer() {
+  drawerOpen = true;
+  $("drawer").classList.add("open");
+  $("overlay").classList.add("open");
+  history.pushState({ d: 1 }, "");
+}
+function hideDrawer() {
+  drawerOpen = false;
+  $("drawer").classList.remove("open");
+  $("overlay").classList.remove("open");
+}
+function closeDrawerByButton() {
+  if (drawerOpen) history.back();   // popstate will hide it
+}
+function navigate(page) {
+  const current = navStack[navStack.length - 1];
+  if (page === current) { closeDrawerByButton(); return; }
+  if (drawerOpen) {
+    hideDrawer();                   // the drawer history entry now belongs to this page
+  } else {
+    history.pushState({ p: page }, "");
+  }
+  navStack.push(page);
+  render(page);
+}
+window.addEventListener("popstate", () => {
+  if (!me) return;
+  if (drawerOpen) { hideDrawer(); return; }
+  if (navStack.length > 1) {
+    navStack.pop();
+    render(navStack[navStack.length - 1]);
+    return;
+  }
+  history.pushState({ s: 1 }, "");
+  toast("You are on the home screen");
+});
+
+/* ---------- pages ---------- */
+function render(page) {
+  const item = MENU.find((m) => m.id === page);
+  $("pageTitle").textContent = item.label;
+  highlightMenu(page);
+  const c = $("content");
+  window.scrollTo(0, 0);
+  if (page === "dashboard") {
+    c.innerHTML =
+      '<div class="card welcome"><h2 id="wName"></h2><p>Welcome to Hospital Management</p><span id="wRole" class="pill"></span></div>' +
+      '<div class="section-title">QUICK ACCESS</div><div class="grid" id="tiles"></div>' +
+      '<div class="card soon" style="margin-top:14px"><div class="ico">&#128200;</div><h3>Numbers and charts</h3><p>They come in the next parts of the app.</p></div>';
+    $("wName").textContent = "Hello, " + me.name;
+    setRolePill($("wRole"), me.role);
+    const tiles = $("tiles");
+    menuForRole(me.role).filter((m) => m.id !== "dashboard").forEach((m) => {
+      const b = document.createElement("button");
+      b.className = "tile";
+      b.innerHTML = '<span class="ico">' + m.icon + "</span>" + m.label;
+      b.onclick = () => navigate(m.id);
+      tiles.appendChild(b);
+    });
+  } else {
+    c.innerHTML =
+      '<div class="card soon"><div class="ico">' + item.icon + "</div><h3>" + item.label +
+      "</h3><p>This page is coming in the next parts.</p></div>";
+  }
+}
+
+/* ---------- events ---------- */
+$("menuBtn").onclick = openDrawer;
+$("overlay").onclick = closeDrawerByButton;
+$("logoutBtn").onclick = async () => {
+  if (confirm("Do you want to log out?")) {
+    await signOut(auth);
   }
 };
 
-document.getElementById("logoutBtn").onclick = async () => {
-  await signOut(auth);
-  document.getElementById("loginBox").style.display = "block";
-  document.getElementById("outBox").style.display = "none";
-  msg.style.display = "none";
-};
+async function doLogin() {
+  const email = $("email").value.trim();
+  const password = $("password").value;
+  const box = $("loginMsg");
+  box.style.display = "none";
+  if (!email || !password) {
+    box.textContent = "Please type your email and password.";
+    box.style.display = "block";
+    return;
+  }
+  $("loginBtn").disabled = true;
+  $("loginBtn").textContent = "Please wait...";
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    // onAuthStateChanged does the rest
+  } catch (e) {
+    let text = "Login failed. Please try again.";
+    if (e.code === "auth/invalid-credential" || e.code === "auth/wrong-password" || e.code === "auth/user-not-found" || e.code === "auth/invalid-email") {
+      text = "Wrong email or password.";
+    } else if (e.code === "auth/network-request-failed") {
+      text = "No internet. Please check your connection.";
+    } else if (e.code === "auth/too-many-requests") {
+      text = "Too many tries. Please wait a few minutes.";
+    } else {
+      text = "ERROR: " + e.code;
+    }
+    box.textContent = text;
+    box.style.display = "block";
+    $("loginBtn").disabled = false;
+    $("loginBtn").textContent = "Log in";
+  }
+}
+$("loginBtn").onclick = doLogin;
+$("password").addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); });
+
+/* ---------- start: check who is logged in ---------- */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    showLogin();
+    return;
+  }
+  try {
+    const snap = await get(ref(db, "users/" + user.uid));
+    const u = snap.exists() ? snap.val() : null;
+    if (!u) {
+      pendingMsg = "Your account has no role yet. Ask the Admin.";
+      await signOut(auth);
+      return;
+    }
+    if (u.active !== true) {
+      pendingMsg = "Your account is turned off. Ask the Admin.";
+      await signOut(auth);
+      return;
+    }
+    if (!ALL.includes(u.role)) {
+      pendingMsg = "Your role is not valid. Ask the Admin.";
+      await signOut(auth);
+      return;
+    }
+    me = { uid: user.uid, name: u.name || "User", role: u.role };
+    showApp();
+  } catch (e) {
+    pendingMsg = "Could not load your account: " + e.code;
+    await signOut(auth);
+  }
+});
 </script>
 </body>
 </html>

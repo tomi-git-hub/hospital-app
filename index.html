@@ -39,8 +39,9 @@
   .login-card { background: white; border-radius: 28px 28px 0 0; padding: 28px 22px 32px; flex: 1; }
   .login-card h2 { margin: 0 0 18px; font-size: 20px; }
   label { display: block; font-size: 13px; font-weight: bold; color: var(--muted); margin: 0 0 6px; }
-  input, select { width: 100%; padding: 15px; margin-bottom: 16px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 16px; background: #f8fafc; color: var(--text); }
-  input:focus, select:focus { outline: 2px solid var(--blue); background: white; }
+  input, select, textarea { width: 100%; padding: 15px; margin-bottom: 16px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 16px; background: #f8fafc; color: var(--text); font-family: inherit; }
+  textarea { min-height: 90px; resize: vertical; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--blue); background: white; }
   input[readonly] { background: #e2e8f0; }
   .btn { width: 100%; padding: 16px; border: 0; border-radius: 12px; background: var(--blue); color: white; font-size: 16px; font-weight: bold; }
   .btn:active { background: var(--blue-dark); }
@@ -108,10 +109,13 @@
   .s-arrived { background: #dbeafe; color: #1e40af; }
   .s-completed { background: #dcfce7; color: #166534; }
   .s-cancelled { background: #fee2e2; color: #991b1b; }
+  .s-upcoming { background: #ede9fe; color: #5b21b6; }
+  .s-overdue { background: #fee2e2; color: #991b1b; }
   .btnrow { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
   .sm { flex: 1; min-width: 90px; padding: 12px 10px; border: 0; border-radius: 10px; background: #dbeafe; color: var(--blue-dark); font-size: 14px; font-weight: bold; }
   .sm.danger { background: #fee2e2; color: #991b1b; }
   .sm.gray { background: #e2e8f0; color: #334155; }
+  .sm.green { background: #dcfce7; color: #166534; }
   .empty { text-align: center; color: var(--muted); padding: 26px 10px; font-size: 14px; }
   .formmsg { margin-top: 14px; padding: 12px; border-radius: 12px; background: #fee2e2; color: #991b1b; font-size: 14px; display: none; word-break: break-word; }
   .days { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
@@ -277,7 +281,9 @@ let departments = {};
 let doctors = {};
 let patients = {};
 let appts = {};
+let followups = {};
 let apptF = { q: "", date: "", doctor: "", status: "" };
+let fuF = { q: "", status: "" };
 let patQ = "";
 
 /* ---------- small helpers ---------- */
@@ -324,6 +330,10 @@ function stClass(s) { return "s-" + String(s || "waiting").toLowerCase(); }
 function canBook() { return me.role === "admin" || me.role === "receptionist"; }
 function currentPage() { return navStack[navStack.length - 1]; }
 function errText(e) { return (e && (e.code || e.message)) || "unknown"; }
+function fuStatus(f) {
+  if (f.status === "Arrived") return "Arrived";
+  return f.date < today() ? "Overdue" : "Upcoming";
+}
 
 async function loadData() {
   const r = await Promise.all([get(ref(db, "departments")), get(ref(db, "doctors"))]);
@@ -333,6 +343,10 @@ async function loadData() {
 async function loadAppts() {
   const s = await get(ref(db, "appointments"));
   appts = s.val() || {};
+}
+async function loadFollowups() {
+  const s = await get(ref(db, "followups"));
+  followups = s.val() || {};
 }
 
 /* ---------- views ---------- */
@@ -366,6 +380,7 @@ function showApp() {
   $("drawerName").textContent = me.name;
   $("avatar").textContent = me.name.charAt(0).toUpperCase();
   apptF = { q: "", date: today(), doctor: "", status: "" };
+  fuF = { q: "", status: "" };
   patQ = "";
   buildMenu();
   navStack = ["dashboard"];
@@ -442,6 +457,7 @@ window.addEventListener("popstate", () => {
     const p = currentPage();
     if (p === "appointments") renderAppointments();
     else if (p === "patients") renderPatients();
+    else if (p === "followups") renderFollowups();
     else if (p === "dashboard") renderDashboard();
     return;
   }
@@ -476,6 +492,9 @@ function render(page) {
   } else if (page === "appointments") {
     c.innerHTML = "";
     renderAppointments();
+  } else if (page === "followups") {
+    c.innerHTML = "";
+    renderFollowups();
   } else {
     c.innerHTML =
       '<div class="card soon"><div class="ico">' + item.icon + "</div><h3>" + item.label +
@@ -490,8 +509,9 @@ function renderDashboard() {
     '<div class="grid"><div class="stat"><div class="num" id="sPat">-</div><div class="lbl">Patients</div></div>' +
     '<div class="stat"><div class="num" id="sToday">-</div><div class="lbl">Today\'s appointments</div></div>' +
     '<div class="stat"><div class="num" id="sDoc">-</div><div class="lbl">Doctors</div></div>' +
-    '<div class="stat"><div class="num" id="sDept">-</div><div class="lbl">Departments</div></div></div>' +
-    '<div class="section-title">QUICK ACCESS</div><div class="grid" id="tiles"></div>';
+    '<div class="stat"><div class="num" id="sDept">-</div><div class="lbl">Departments</div></div>' +
+    (canBook() ? '<div class="stat"><div class="num" id="sFu">-</div><div class="lbl">Upcoming follow-ups</div></div>' : "") +
+    '</div><div class="section-title">QUICK ACCESS</div><div class="grid" id="tiles"></div>';
   $("wName").textContent = "Hello, " + me.name;
   setRolePill($("wRole"), me.role);
   const tiles = $("tiles");
@@ -502,7 +522,9 @@ function renderDashboard() {
     b.onclick = () => navigate(m.id);
     tiles.appendChild(b);
   });
-  Promise.all([loadData(), get(ref(db, "patients")), get(ref(db, "appointments"))]).then((r) => {
+  const jobs = [loadData(), get(ref(db, "patients")), get(ref(db, "appointments"))];
+  if (canBook()) jobs.push(get(ref(db, "followups")));
+  Promise.all(jobs).then((r) => {
     if (currentPage() !== "dashboard") return;
     const pats = r[1].val() || {};
     const aps = r[2].val() || {};
@@ -518,6 +540,12 @@ function renderDashboard() {
     $("sDept").textContent = Object.keys(departments).length;
     $("sPat").textContent = Object.keys(pats).length;
     $("sToday").textContent = n;
+    if (canBook() && r[3]) {
+      const fus = r[3].val() || {};
+      let u = 0;
+      Object.keys(fus).forEach((k) => { if (fuStatus(fus[k]) === "Upcoming") u++; });
+      $("sFu").textContent = u;
+    }
   }).catch(() => {});
 }
 
@@ -1163,6 +1191,264 @@ async function apptAction(act, id) {
   } catch (e) {
     toast("Error: " + errText(e));
   }
+}
+
+/* ----- Follow-ups ----- */
+async function renderFollowups() {
+  const c = $("content");
+  if (!$("fuList")) {
+    try { await loadData(); } catch (e) { /* ignore */ }
+    if (currentPage() !== "followups") return;
+    c.innerHTML =
+      '<button class="btn" id="addFu">+ Add follow-up</button><div style="height:14px"></div>' +
+      '<input id="fuSearch" type="search" placeholder="Search by Patient ID or name">' +
+      '<label for="fuStatus">Status</label><select id="fuStatus"><option value="">All</option><option>Upcoming</option><option>Overdue</option><option>Arrived</option></select>' +
+      '<div id="fuList"><div class="card empty">Loading...</div></div>';
+    $("addFu").onclick = () => fuForm(null);
+    $("fuSearch").value = fuF.q;
+    $("fuStatus").value = fuF.status;
+    $("fuSearch").oninput = () => { fuF.q = $("fuSearch").value; drawFollowups(); };
+    $("fuStatus").onchange = () => { fuF.status = $("fuStatus").value; drawFollowups(); };
+  }
+  try {
+    await loadFollowups();
+  } catch (e) {
+    if (currentPage() !== "followups" || !$("fuList")) return;
+    $("fuList").innerHTML = '<div class="card empty">Could not load: ' + esc(errText(e)) + "</div>";
+    return;
+  }
+  if (currentPage() !== "followups") return;
+  drawFollowups();
+}
+
+function drawFollowups() {
+  const box = $("fuList");
+  if (!box) return;
+  const q = fuF.q.trim().toLowerCase();
+  let list = Object.keys(followups).map((k) => Object.assign({ id: k }, followups[k]));
+  list.forEach((f) => { f.shown = fuStatus(f); });
+  const total = list.length;
+  if (fuF.status) list = list.filter((f) => f.shown === fuF.status);
+  if (q) list = list.filter((f) => String(f.patientId).indexOf(q) >= 0 || String(f.patientName || "").toLowerCase().indexOf(q) >= 0);
+  list.sort((a, b) => {
+    const aa = a.shown === "Arrived" ? 1 : 0;
+    const bb = b.shown === "Arrived" ? 1 : 0;
+    return aa - bb || String(a.date).localeCompare(String(b.date));
+  });
+  if (!list.length) {
+    box.innerHTML = '<div class="card empty">' + (total ? "No follow-ups found." : "No follow-ups yet.<br>Tap \"Add follow-up\" to make one.") + "</div>";
+    return;
+  }
+  let html = '<div class="item-sub" style="margin:0 4px 10px">' + list.length + " follow-up(s)</div>";
+  list.forEach((f) => {
+    let btns = "";
+    if (f.shown === "Arrived") {
+      btns = '<div class="item-sub">Appointment was made when the patient arrived.</div>';
+    } else {
+      btns = '<div class="btnrow">' +
+        '<button class="sm green" data-act="arrive" data-id="' + esc(f.id) + '">Confirm Arrival</button>' +
+        '<button class="sm" data-act="edit" data-id="' + esc(f.id) + '">Edit</button>' +
+        '<button class="sm danger" data-act="del" data-id="' + esc(f.id) + '">Delete</button></div>';
+    }
+    html += '<div class="card"><div class="item-top"><div class="item-name">' + esc(f.patientName) + "</div>" +
+      '<span class="st ' + stClass(f.shown) + '">' + esc(f.shown) + "</span></div>" +
+      '<div class="item-sub">ID ' + esc(f.patientId) + " | " + esc(f.phone) + "</div>" +
+      '<div class="item-sub">' + esc(f.doctorName) + " | " + esc(f.departmentName || "") + "</div>" +
+      '<div class="item-sub">Follow-up date: <b>' + esc(fmtDate(f.date)) + "</b></div>" +
+      (f.notes ? '<div class="item-sub">Notes: ' + esc(f.notes) + "</div>" : "") + btns + "</div>";
+  });
+  box.innerHTML = html;
+  box.querySelectorAll("button[data-act]").forEach((b) => { b.onclick = () => fuAction(b.dataset.act, b.dataset.id); });
+}
+
+async function fuAction(act, id) {
+  const f = followups[id];
+  if (!f) return;
+  if (act === "edit") { fuForm(id); return; }
+  if (act === "del") {
+    if (!confirm("Delete this follow-up?")) return;
+    try {
+      await remove(ref(db, "followups/" + id));
+      toast("Follow-up deleted");
+      await renderFollowups();
+    } catch (e) {
+      toast("Error: " + errText(e));
+    }
+    return;
+  }
+  if (act === "arrive") await fuArrive(id);
+}
+
+async function fuArrive(id) {
+  const f = followups[id];
+  const d = doctors[f.doctorId];
+  if (!d) { toast("This doctor was deleted. Edit the follow-up and choose another doctor."); return; }
+  if (d.active === false) { toast("This doctor is turned off. Edit the follow-up first."); return; }
+  if (!confirm("Confirm arrival for " + f.patientName + "? A new appointment for today will be made.")) return;
+  const date = today();
+  let claimed = false;
+  let made = false;
+  try {
+    const cr = await runTransaction(ref(db, "followups/" + id + "/status"), (cur) => (cur === "Arrived" ? undefined : "Arrived"));
+    if (!cr.committed) {
+      toast("This follow-up was already confirmed.");
+      await renderFollowups();
+      return;
+    }
+    claimed = true;
+    const ps = await get(ref(db, "patients/" + f.patientId));
+    const p = ps.val() || { name: f.patientName, phone: f.phone, age: f.age };
+    const tr = await runTransaction(ref(db, "counters/tokens/" + date + "/" + f.doctorId), (cur) => (cur || 0) + 1);
+    const token = tr.snapshot.val();
+    const aref = push(ref(db, "appointments"));
+    const a = {
+      patientId: f.patientId, patientName: p.name, phone: p.phone, age: p.age,
+      doctorId: f.doctorId, doctorName: d.name, departmentId: d.departmentId,
+      departmentName: departments[d.departmentId] ? departments[d.departmentId].name : "",
+      date: date, token: token, fee: Number(d.fee || 0),
+      status: "Arrived", paymentStatus: "Unpaid", createdAt: Date.now(), createdBy: me.uid,
+      fromFollowup: id
+    };
+    await set(aref, a);
+    made = true;
+    a.id = aref.key;
+    try {
+      await update(ref(db, "followups/" + id), { appointmentId: aref.key, arrivedAt: Date.now() });
+    } catch (e2) { /* appointment is saved; this extra note is not important */ }
+    openSheet("Arrival confirmed",
+      '<div class="card okbox"><div class="tick">&#10003;</div><h3>Arrival confirmed</h3>' +
+      '<div class="item-name">' + esc(a.patientName) + "</div>" +
+      '<div class="item-sub">Patient ID: <b>' + esc(a.patientId) + "</b></div>" +
+      '<div class="item-sub">' + esc(a.doctorName) + " | " + esc(a.departmentName) + "</div>" +
+      '<div class="item-sub">' + esc(fmtDate(a.date)) + " | Fee: Rs " + esc(a.fee) + "</div>" +
+      '<div class="tokenshow">Token ' + esc(a.token) + "</div>" +
+      '<button class="btn green" id="okPrint">Print Slip</button><div style="height:10px"></div>' +
+      '<button class="btn gray" id="okClose">Close</button></div>');
+    $("okPrint").onclick = () => printSlip(a);
+    $("okClose").onclick = closeSheetByButton;
+  } catch (e) {
+    if (claimed && !made) {
+      try { await update(ref(db, "followups/" + id), { status: "Upcoming" }); } catch (e3) { /* ignore */ }
+    }
+    toast("Error: " + errText(e));
+    try { await renderFollowups(); } catch (e4) { /* ignore */ }
+  }
+}
+
+function fuForm(id) {
+  const f = id ? followups[id] : null;
+  const docs = listOf(doctors).filter((d) => d.active !== false || (f && d.id === f.doctorId));
+  if (docs.length === 0) { toast("Please add an active doctor first."); return; }
+  let opts = '<option value="">Choose doctor</option>';
+  docs.forEach((d) => { opts += '<option value="' + esc(d.id) + '">' + esc(d.name) + " - " + esc(d.specialty || "") + (d.active === false ? " (off)" : "") + "</option>"; });
+  openSheet(id ? "Edit follow-up" : "Add follow-up",
+    '<div class="card">' +
+    '<label for="fPid">Patient ID</label>' +
+    '<div class="rowbtn"><input id="fPid" type="text" inputmode="numeric" maxlength="6" placeholder="Example: 000001"><button class="sm" id="findBtn" type="button">Find</button></div>' +
+    '<div class="note" id="pidMsg"></div>' +
+    '<label for="fPname">Patient name</label><input id="fPname" type="text" readonly placeholder="Shown after you find the patient">' +
+    '<label for="fDoc">Doctor</label><select id="fDoc">' + opts + "</select>" +
+    '<label for="fDate">Follow-up date</label><input id="fDate" type="date">' +
+    '<label for="fNotes">Notes</label><textarea id="fNotes" maxlength="300" placeholder="Example: Come back with blood test report"></textarea>' +
+    '<button class="btn" id="saveBtn">Save Follow-up</button><div class="formmsg" id="formMsg"></div></div>');
+
+  let loaded = null;
+  if (f) {
+    loaded = { id: f.patientId, name: f.patientName, phone: f.phone, age: f.age };
+    $("fPid").value = f.patientId;
+    $("fPid").readOnly = true;
+    $("findBtn").style.display = "none";
+    $("fPname").value = f.patientName;
+    $("fDoc").value = f.doctorId;
+    $("fDate").value = f.date;
+    $("fNotes").value = f.notes || "";
+  } else {
+    $("fDate").min = today();
+  }
+
+  function setPidMsg(text, kind) {
+    if (!$("pidMsg")) return;
+    $("pidMsg").textContent = text;
+    $("pidMsg").className = "note " + (kind || "");
+  }
+  async function loadPatient() {
+    const digits = $("fPid").value.replace(/\D/g, "");
+    if (!digits) return;
+    const pid = digits.padStart(6, "0");
+    $("fPid").value = pid;
+    setPidMsg("Looking for patient...", "");
+    try {
+      const s = await get(ref(db, "patients/" + pid));
+      if (!$("fPid") || $("fPid").value !== pid) return;
+      if (s.exists()) {
+        loaded = Object.assign({ id: pid }, s.val());
+        $("fPname").value = loaded.name || "";
+        setPidMsg("Patient found.", "ok");
+      } else {
+        loaded = null;
+        $("fPname").value = "";
+        setPidMsg("No patient with this ID.", "bad");
+      }
+    } catch (e) {
+      if ($("pidMsg")) setPidMsg("Could not search: " + errText(e), "bad");
+    }
+  }
+  if (!f) {
+    $("fPid").oninput = () => {
+      const v = $("fPid").value.replace(/\D/g, "");
+      $("fPid").value = v;
+      if (loaded && v !== loaded.id) { loaded = null; $("fPname").value = ""; }
+      if (!v) setPidMsg("", "");
+      if (v.length === 6) loadPatient();
+    };
+    $("findBtn").onclick = () => {
+      if (!$("fPid").value.trim()) { setPidMsg("Type a Patient ID first.", "bad"); return; }
+      loadPatient();
+    };
+  }
+
+  $("saveBtn").onclick = async () => {
+    const msg = $("formMsg");
+    msg.style.display = "none";
+    const did = $("fDoc").value;
+    const date = $("fDate").value;
+    const notes = $("fNotes").value.trim();
+    let problem = "";
+    if (!loaded) problem = "Please find the patient first. Type the Patient ID.";
+    else if (!did) problem = "Please choose a doctor.";
+    else if (!date) problem = "Please choose the follow-up date.";
+    else if (date < today() && !(f && f.date === date)) problem = "The date cannot be in the past.";
+    if (problem) { msg.textContent = problem; msg.style.display = "block"; return; }
+    const d = doctors[did];
+    const data = {
+      doctorId: did, doctorName: d.name, departmentId: d.departmentId,
+      departmentName: departments[d.departmentId] ? departments[d.departmentId].name : "",
+      date: date, notes: notes
+    };
+    $("saveBtn").disabled = true;
+    $("saveBtn").textContent = "Saving...";
+    try {
+      if (f) {
+        await update(ref(db, "followups/" + id), data);
+      } else {
+        data.patientId = loaded.id;
+        data.patientName = loaded.name;
+        data.phone = loaded.phone || "";
+        data.age = loaded.age != null ? loaded.age : "";
+        data.status = "Upcoming";
+        data.createdAt = Date.now();
+        data.createdBy = me.uid;
+        await set(push(ref(db, "followups")), data);
+      }
+      closeSheetByButton();
+      toast("Follow-up saved");
+    } catch (e) {
+      msg.textContent = "Could not save: " + errText(e);
+      msg.style.display = "block";
+      $("saveBtn").disabled = false;
+      $("saveBtn").textContent = "Save Follow-up";
+    }
+  };
 }
 
 /* ---------- events ---------- */

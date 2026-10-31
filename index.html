@@ -15,6 +15,7 @@
     --purple: #7c3aed;
     --green: #16a34a;
     --doctor: #2563eb;
+    --red: #dc2626;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; height: 100%; }
@@ -38,8 +39,8 @@
   .login-card { background: white; border-radius: 28px 28px 0 0; padding: 28px 22px 32px; flex: 1; }
   .login-card h2 { margin: 0 0 18px; font-size: 20px; }
   label { display: block; font-size: 13px; font-weight: bold; color: var(--muted); margin: 0 0 6px; }
-  input { width: 100%; padding: 15px; margin-bottom: 16px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 16px; background: #f8fafc; }
-  input:focus { outline: 2px solid var(--blue); background: white; }
+  input, select { width: 100%; padding: 15px; margin-bottom: 16px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 16px; background: #f8fafc; color: var(--text); }
+  input:focus, select:focus { outline: 2px solid var(--blue); background: white; }
   .btn { width: 100%; padding: 16px; border: 0; border-radius: 12px; background: var(--blue); color: white; font-size: 16px; font-weight: bold; }
   .btn:active { background: var(--blue-dark); }
   .btn:disabled { opacity: 0.6; }
@@ -84,10 +85,39 @@
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .tile { background: white; border: 0; border-radius: 18px; padding: 18px 12px; text-align: center; box-shadow: 0 2px 12px rgba(15,23,42,0.07); font-size: 14px; font-weight: bold; color: var(--text); }
   .tile .ico { display: block; font-size: 30px; margin-bottom: 8px; }
+  .stat { background: white; border-radius: 18px; padding: 16px; box-shadow: 0 2px 12px rgba(15,23,42,0.07); }
+  .stat .num { font-size: 30px; font-weight: bold; color: var(--blue); }
+  .stat .lbl { font-size: 13px; color: var(--muted); margin-top: 2px; }
   .soon { text-align: center; padding: 30px 18px; }
   .soon .ico { font-size: 52px; }
   .soon h3 { margin: 10px 0 6px; }
   .soon p { margin: 0; color: var(--muted); font-size: 14px; }
+
+  /* Lists */
+  .item-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+  .item-name { font-size: 17px; font-weight: bold; word-break: break-word; }
+  .item-sub { font-size: 14px; color: var(--muted); margin-bottom: 4px; word-break: break-word; }
+  .st { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: bold; white-space: nowrap; }
+  .st-on { background: #dcfce7; color: #166534; }
+  .st-off { background: #e2e8f0; color: #475569; }
+  .btnrow { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .sm { flex: 1; min-width: 90px; padding: 12px 10px; border: 0; border-radius: 10px; background: #dbeafe; color: var(--blue-dark); font-size: 14px; font-weight: bold; }
+  .sm.danger { background: #fee2e2; color: #991b1b; }
+  .sm.gray { background: #e2e8f0; color: #334155; }
+  .empty { text-align: center; color: var(--muted); padding: 26px 10px; font-size: 14px; }
+  .formmsg { margin-top: 14px; padding: 12px; border-radius: 12px; background: #fee2e2; color: #991b1b; font-size: 14px; display: none; word-break: break-word; }
+  .days { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .daychip input { display: none; }
+  .daychip span { display: inline-block; padding: 10px 14px; border-radius: 999px; background: #e2e8f0; color: #334155; font-size: 14px; font-weight: bold; }
+  .daychip input:checked + span { background: var(--blue); color: white; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* Form screen */
+  #sheet { position: fixed; inset: 0; background: var(--bg); z-index: 60; overflow-y: auto; }
+  .sheet-top { position: sticky; top: 0; z-index: 2; background: var(--blue); color: white; display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+  #sheetBack { background: rgba(255,255,255,0.18); border: 0; color: white; width: 44px; height: 44px; border-radius: 12px; font-size: 22px; }
+  #sheetTitle { font-size: 18px; font-weight: bold; }
+  #sheetBody { padding: 16px; max-width: 800px; margin: 0 auto; }
 
   #toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: #0f172a; color: white; padding: 12px 18px; border-radius: 12px; font-size: 14px; z-index: 200; display: none; max-width: 90%; text-align: center; }
 </style>
@@ -139,6 +169,14 @@
       <button id="logoutBtn" class="logout"><span>&#128682;</span> Log out</button>
     </div>
   </aside>
+
+  <div id="sheet" class="hidden">
+    <div class="sheet-top">
+      <button id="sheetBack" aria-label="Back">&#8592;</button>
+      <div id="sheetTitle"></div>
+    </div>
+    <div id="sheetBody"></div>
+  </div>
 </div>
 
 <div id="toast"></div>
@@ -146,7 +184,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, get, set, push, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAZXTl8iB6fYYSVDbce5RuQQdjlxpoF5g4",
@@ -163,6 +201,7 @@ const auth = getAuth(app);
 const db = getDatabase(app);
 
 const ALL = ["admin", "receptionist", "doctor"];
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const MENU = [
   { id: "dashboard",    label: "Dashboard",         icon: "\u{1F3E0}", roles: ALL },
   { id: "appointments", label: "Appointments",      icon: "\u{1F4C5}", roles: ALL },
@@ -179,10 +218,13 @@ const MENU = [
 ];
 
 const $ = (id) => document.getElementById(id);
-let me = null;            // { uid, name, role }
-let navStack = [];        // pages we visited
+let me = null;
+let navStack = [];
 let drawerOpen = false;
+let sheetOpen = false;
 let pendingMsg = "";
+let departments = {};
+let doctors = {};
 
 /* ---------- small helpers ---------- */
 function toast(text) {
@@ -190,26 +232,48 @@ function toast(text) {
   t.textContent = text;
   t.style.display = "block";
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => { t.style.display = "none"; }, 2500);
+  toast._t = setTimeout(() => { t.style.display = "none"; }, 2800);
 }
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
 function setRolePill(el, role) {
   el.className = "pill role-" + role;
   el.textContent = cap(role);
 }
 function menuForRole(role) { return MENU.filter((m) => m.roles.includes(role)); }
+function listOf(obj) {
+  return Object.keys(obj).map((id) => Object.assign({ id: id }, obj[id]))
+    .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
+}
+function fmtTime(t) {
+  if (!t) return "";
+  const parts = t.split(":");
+  let h = parseInt(parts[0], 10);
+  const m = parts[1] || "00";
+  const ap = h >= 12 ? "PM" : "AM";
+  h = h % 12; if (h === 0) h = 12;
+  return h + ":" + m + " " + ap;
+}
+function currentPage() { return navStack[navStack.length - 1]; }
+function errText(e) { return (e && (e.code || e.message)) || "unknown"; }
+
+async function loadData() {
+  const r = await Promise.all([get(ref(db, "departments")), get(ref(db, "doctors"))]);
+  departments = r[0].val() || {};
+  doctors = r[1].val() || {};
+}
 
 /* ---------- views ---------- */
-function showSplash() {
-  $("splash").classList.remove("hidden");
-}
-function hideSplash() {
-  $("splash").classList.add("hidden");
-}
+function showSplash() { $("splash").classList.remove("hidden"); }
+function hideSplash() { $("splash").classList.add("hidden"); }
 function showLogin() {
   me = null;
   navStack = [];
   drawerOpen = false;
+  hideSheet();
+  hideDrawer();
   $("appView").classList.add("hidden");
   $("loginView").classList.remove("hidden");
   $("loginBtn").disabled = false;
@@ -258,7 +322,7 @@ function highlightMenu(page) {
   });
 }
 
-/* ---------- drawer + back button ---------- */
+/* ---------- drawer, form screen, back button ---------- */
 function openDrawer() {
   drawerOpen = true;
   $("drawer").classList.add("open");
@@ -271,13 +335,27 @@ function hideDrawer() {
   $("overlay").classList.remove("open");
 }
 function closeDrawerByButton() {
-  if (drawerOpen) history.back();   // popstate will hide it
+  if (drawerOpen) history.back();
+}
+function openSheet(title, html) {
+  $("sheetTitle").textContent = title;
+  $("sheetBody").innerHTML = html;
+  $("sheet").classList.remove("hidden");
+  $("sheet").scrollTop = 0;
+  sheetOpen = true;
+  history.pushState({ sh: 1 }, "");
+}
+function hideSheet() {
+  sheetOpen = false;
+  $("sheet").classList.add("hidden");
+}
+function closeSheetByButton() {
+  if (sheetOpen) history.back();
 }
 function navigate(page) {
-  const current = navStack[navStack.length - 1];
-  if (page === current) { closeDrawerByButton(); return; }
+  if (page === currentPage()) { closeDrawerByButton(); return; }
   if (drawerOpen) {
-    hideDrawer();                   // the drawer history entry now belongs to this page
+    hideDrawer();
   } else {
     history.pushState({ p: page }, "");
   }
@@ -286,6 +364,7 @@ function navigate(page) {
 }
 window.addEventListener("popstate", () => {
   if (!me) return;
+  if (sheetOpen) { hideSheet(); return; }
   if (drawerOpen) { hideDrawer(); return; }
   if (navStack.length > 1) {
     navStack.pop();
@@ -304,25 +383,277 @@ function render(page) {
   const c = $("content");
   window.scrollTo(0, 0);
   if (page === "dashboard") {
-    c.innerHTML =
-      '<div class="card welcome"><h2 id="wName"></h2><p>Welcome to Hospital Management</p><span id="wRole" class="pill"></span></div>' +
-      '<div class="section-title">QUICK ACCESS</div><div class="grid" id="tiles"></div>' +
-      '<div class="card soon" style="margin-top:14px"><div class="ico">&#128200;</div><h3>Numbers and charts</h3><p>They come in the next parts of the app.</p></div>';
-    $("wName").textContent = "Hello, " + me.name;
-    setRolePill($("wRole"), me.role);
-    const tiles = $("tiles");
-    menuForRole(me.role).filter((m) => m.id !== "dashboard").forEach((m) => {
-      const b = document.createElement("button");
-      b.className = "tile";
-      b.innerHTML = '<span class="ico">' + m.icon + "</span>" + m.label;
-      b.onclick = () => navigate(m.id);
-      tiles.appendChild(b);
-    });
+    renderDashboard();
+  } else if (page === "departments") {
+    c.innerHTML = '<div class="card soon"><p>Loading...</p></div>';
+    renderDepartments();
+  } else if (page === "doctors") {
+    c.innerHTML = '<div class="card soon"><p>Loading...</p></div>';
+    renderDoctors();
   } else {
     c.innerHTML =
       '<div class="card soon"><div class="ico">' + item.icon + "</div><h3>" + item.label +
       "</h3><p>This page is coming in the next parts.</p></div>";
   }
+}
+
+function renderDashboard() {
+  const c = $("content");
+  c.innerHTML =
+    '<div class="card welcome"><h2 id="wName"></h2><p>Welcome to Hospital Management</p><span id="wRole" class="pill"></span></div>' +
+    '<div class="grid"><div class="stat"><div class="num" id="sDoc">-</div><div class="lbl">Doctors</div></div>' +
+    '<div class="stat"><div class="num" id="sDept">-</div><div class="lbl">Departments</div></div></div>' +
+    '<div class="section-title">QUICK ACCESS</div><div class="grid" id="tiles"></div>';
+  $("wName").textContent = "Hello, " + me.name;
+  setRolePill($("wRole"), me.role);
+  const tiles = $("tiles");
+  menuForRole(me.role).filter((m) => m.id !== "dashboard").forEach((m) => {
+    const b = document.createElement("button");
+    b.className = "tile";
+    b.innerHTML = '<span class="ico">' + m.icon + "</span>" + m.label;
+    b.onclick = () => navigate(m.id);
+    tiles.appendChild(b);
+  });
+  loadData().then(() => {
+    if (currentPage() !== "dashboard") return;
+    $("sDoc").textContent = Object.keys(doctors).length;
+    $("sDept").textContent = Object.keys(departments).length;
+  }).catch(() => {});
+}
+
+/* ----- Departments ----- */
+async function renderDepartments() {
+  const c = $("content");
+  try {
+    await loadData();
+  } catch (e) {
+    if (currentPage() !== "departments") return;
+    c.innerHTML = '<div class="card soon"><p>Could not load: ' + esc(errText(e)) + "</p></div>";
+    return;
+  }
+  if (currentPage() !== "departments") return;
+  const docs = listOf(doctors);
+  let html = '<button class="btn" id="addDept">+ Add department</button><div style="height:14px"></div>';
+  const depts = listOf(departments);
+  if (depts.length === 0) {
+    html += '<div class="card empty">No departments yet.<br>Tap "Add department" to make the first one.</div>';
+  }
+  depts.forEach((d) => {
+    const on = d.active !== false;
+    const inside = docs.filter((x) => x.departmentId === d.id);
+    const names = inside.map((x) => x.name).join(", ");
+    html += '<div class="card"><div class="item-top"><div class="item-name">' + esc(d.name) + "</div>" +
+      '<span class="st ' + (on ? "st-on" : "st-off") + '">' + (on ? "Active" : "Off") + "</span></div>" +
+      '<div class="item-sub">' + inside.length + " doctor(s)" + (names ? ": " + esc(names) : "") + "</div>" +
+      '<div class="btnrow">' +
+      '<button class="sm" data-act="edit" data-id="' + esc(d.id) + '">Edit</button>' +
+      '<button class="sm gray" data-act="toggle" data-id="' + esc(d.id) + '">' + (on ? "Turn off" : "Turn on") + "</button>" +
+      '<button class="sm danger" data-act="del" data-id="' + esc(d.id) + '">Delete</button>' +
+      "</div></div>";
+  });
+  c.innerHTML = html;
+  $("addDept").onclick = () => deptForm(null);
+  c.querySelectorAll("button[data-act]").forEach((b) => {
+    b.onclick = () => deptAction(b.dataset.act, b.dataset.id);
+  });
+}
+
+async function deptAction(act, id) {
+  const d = departments[id];
+  if (!d) return;
+  if (act === "edit") { deptForm(id); return; }
+  try {
+    if (act === "toggle") {
+      await update(ref(db, "departments/" + id), { active: d.active === false });
+      toast(d.active === false ? "Department turned on" : "Department turned off");
+    } else if (act === "del") {
+      const used = listOf(doctors).some((x) => x.departmentId === id);
+      if (used) { toast("First move or delete the doctors in this department."); return; }
+      if (!confirm("Delete department " + d.name + "?")) return;
+      await remove(ref(db, "departments/" + id));
+      toast("Department deleted");
+    }
+    await renderDepartments();
+  } catch (e) {
+    toast("Error: " + errText(e));
+  }
+}
+
+function deptForm(id) {
+  openSheet(id ? "Edit department" : "Add department",
+    '<div class="card"><label for="fName">Department name</label>' +
+    '<input id="fName" type="text" placeholder="Example: Cardiology" maxlength="60">' +
+    '<button class="btn" id="saveBtn">Save</button><div class="formmsg" id="formMsg"></div></div>');
+  $("fName").value = id ? (departments[id].name || "") : "";
+  $("sheetBack").onclick = closeSheetByButton;
+  $("saveBtn").onclick = async () => {
+    const name = $("fName").value.trim();
+    const msg = $("formMsg");
+    msg.style.display = "none";
+    if (!name) { msg.textContent = "Please type the department name."; msg.style.display = "block"; return; }
+    const dup = listOf(departments).some((x) => x.id !== id && String(x.name).toLowerCase() === name.toLowerCase());
+    if (dup) { msg.textContent = "This department already exists."; msg.style.display = "block"; return; }
+    $("saveBtn").disabled = true;
+    $("saveBtn").textContent = "Saving...";
+    try {
+      if (id) {
+        await update(ref(db, "departments/" + id), { name: name });
+      } else {
+        const r = push(ref(db, "departments"));
+        await set(r, { name: name, active: true, createdAt: Date.now() });
+      }
+      closeSheetByButton();
+      toast("Saved");
+      if (currentPage() === "departments") await renderDepartments();
+    } catch (e) {
+      msg.textContent = "Could not save: " + errText(e);
+      msg.style.display = "block";
+      $("saveBtn").disabled = false;
+      $("saveBtn").textContent = "Save";
+    }
+  };
+}
+
+/* ----- Doctors ----- */
+async function renderDoctors() {
+  const c = $("content");
+  try {
+    await loadData();
+  } catch (e) {
+    if (currentPage() !== "doctors") return;
+    c.innerHTML = '<div class="card soon"><p>Could not load: ' + esc(errText(e)) + "</p></div>";
+    return;
+  }
+  if (currentPage() !== "doctors") return;
+  let html = '<button class="btn" id="addDoc">+ Add doctor</button><div style="height:14px"></div>';
+  const docs = listOf(doctors);
+  if (docs.length === 0) {
+    html += '<div class="card empty">No doctors yet.<br>Add a department first. Then tap "Add doctor".</div>';
+  }
+  docs.forEach((d) => {
+    const on = d.active !== false;
+    const dept = departments[d.departmentId] ? departments[d.departmentId].name : "No department";
+    const days = d.days ? String(d.days).split(",").join(", ") : "No days set";
+    const time = d.timeFrom && d.timeTo ? fmtTime(d.timeFrom) + " - " + fmtTime(d.timeTo) : "No timing set";
+    html += '<div class="card"><div class="item-top"><div class="item-name">' + esc(d.name) + "</div>" +
+      '<span class="st ' + (on ? "st-on" : "st-off") + '">' + (on ? "Active" : "Off") + "</span></div>" +
+      '<div class="item-sub">' + esc(d.specialty || "") + " | " + esc(dept) + "</div>" +
+      '<div class="item-sub">Fee: Rs ' + esc(d.fee != null ? d.fee : 0) + (d.phone ? " | " + esc(d.phone) : "") + "</div>" +
+      '<div class="item-sub">' + esc(days) + " | " + esc(time) + "</div>" +
+      '<div class="btnrow">' +
+      '<button class="sm" data-act="edit" data-id="' + esc(d.id) + '">Edit</button>' +
+      '<button class="sm gray" data-act="toggle" data-id="' + esc(d.id) + '">' + (on ? "Turn off" : "Turn on") + "</button>" +
+      '<button class="sm danger" data-act="del" data-id="' + esc(d.id) + '">Delete</button>' +
+      "</div></div>";
+  });
+  c.innerHTML = html;
+  $("addDoc").onclick = () => {
+    if (listOf(departments).length === 0) { toast("Please add a department first."); return; }
+    doctorForm(null);
+  };
+  c.querySelectorAll("button[data-act]").forEach((b) => {
+    b.onclick = () => doctorAction(b.dataset.act, b.dataset.id);
+  });
+}
+
+async function doctorAction(act, id) {
+  const d = doctors[id];
+  if (!d) return;
+  if (act === "edit") { doctorForm(id); return; }
+  try {
+    if (act === "toggle") {
+      await update(ref(db, "doctors/" + id), { active: d.active === false });
+      toast(d.active === false ? "Doctor turned on" : "Doctor turned off");
+    } else if (act === "del") {
+      if (!confirm("Delete doctor " + d.name + "? Turning the doctor off is safer.")) return;
+      await remove(ref(db, "doctors/" + id));
+      toast("Doctor deleted");
+    }
+    await renderDoctors();
+  } catch (e) {
+    toast("Error: " + errText(e));
+  }
+}
+
+function doctorForm(id) {
+  const d = id ? doctors[id] : { name: "", specialty: "", departmentId: "", phone: "", fee: "", days: "", timeFrom: "09:00", timeTo: "17:00", active: true };
+  const chosen = String(d.days || "").split(",");
+  let deptOptions = '<option value="">Choose department</option>';
+  listOf(departments).forEach((x) => {
+    if (x.active === false && x.id !== d.departmentId) return;
+    deptOptions += '<option value="' + esc(x.id) + '">' + esc(x.name) + (x.active === false ? " (off)" : "") + "</option>";
+  });
+  let dayHtml = "";
+  DAYS.forEach((day) => {
+    dayHtml += '<label class="daychip"><input type="checkbox" value="' + day + '"><span>' + day + "</span></label>";
+  });
+  openSheet(id ? "Edit doctor" : "Add doctor",
+    '<div class="card">' +
+    '<label for="fName">Doctor name</label><input id="fName" type="text" placeholder="Example: Dr. Ali" maxlength="60">' +
+    '<label for="fSpec">Specialty</label><input id="fSpec" type="text" placeholder="Example: Heart specialist" maxlength="60">' +
+    '<label for="fDept">Department</label><select id="fDept">' + deptOptions + "</select>" +
+    '<label for="fPhone">Phone number</label><input id="fPhone" type="tel" placeholder="03001234567" maxlength="20">' +
+    '<label for="fFee">Consultation fee (Rs)</label><input id="fFee" type="number" inputmode="numeric" min="0" placeholder="1000">' +
+    "<label>Available days</label><div class=\"days\" id=\"fDays\">" + dayHtml + "</div>" +
+    '<div class="two"><div><label for="fFrom">From</label><input id="fFrom" type="time"></div>' +
+    '<div><label for="fTo">To</label><input id="fTo" type="time"></div></div>' +
+    '<label for="fActive">Status</label><select id="fActive"><option value="1">Active</option><option value="0">Turned off</option></select>' +
+    '<button class="btn" id="saveBtn">Save</button><div class="formmsg" id="formMsg"></div></div>');
+  $("fName").value = d.name || "";
+  $("fSpec").value = d.specialty || "";
+  $("fDept").value = d.departmentId || "";
+  $("fPhone").value = d.phone || "";
+  $("fFee").value = d.fee != null ? d.fee : "";
+  $("fFrom").value = d.timeFrom || "";
+  $("fTo").value = d.timeTo || "";
+  $("fActive").value = d.active === false ? "0" : "1";
+  $("fDays").querySelectorAll("input").forEach((i) => { i.checked = chosen.includes(i.value); });
+  $("sheetBack").onclick = closeSheetByButton;
+  $("saveBtn").onclick = async () => {
+    const msg = $("formMsg");
+    msg.style.display = "none";
+    const name = $("fName").value.trim();
+    const specialty = $("fSpec").value.trim();
+    const departmentId = $("fDept").value;
+    const phone = $("fPhone").value.trim();
+    const feeText = $("fFee").value.trim();
+    const days = [];
+    $("fDays").querySelectorAll("input").forEach((i) => { if (i.checked) days.push(i.value); });
+    const timeFrom = $("fFrom").value;
+    const timeTo = $("fTo").value;
+    let problem = "";
+    if (!name) problem = "Please type the doctor name.";
+    else if (!specialty) problem = "Please type the specialty.";
+    else if (!departmentId) problem = "Please choose a department.";
+    else if (feeText === "" || isNaN(Number(feeText)) || Number(feeText) < 0) problem = "Please type a correct fee.";
+    else if (days.length === 0) problem = "Please choose at least one day.";
+    else if (!timeFrom || !timeTo) problem = "Please choose the start and end time.";
+    if (problem) { msg.textContent = problem; msg.style.display = "block"; return; }
+    const data = {
+      name: name, specialty: specialty, departmentId: departmentId, phone: phone,
+      fee: Number(feeText), days: days.join(","), timeFrom: timeFrom, timeTo: timeTo,
+      active: $("fActive").value === "1"
+    };
+    $("saveBtn").disabled = true;
+    $("saveBtn").textContent = "Saving...";
+    try {
+      if (id) {
+        await update(ref(db, "doctors/" + id), data);
+      } else {
+        data.createdAt = Date.now();
+        const r = push(ref(db, "doctors"));
+        await set(r, data);
+      }
+      closeSheetByButton();
+      toast("Saved");
+      if (currentPage() === "doctors") await renderDoctors();
+    } catch (e) {
+      msg.textContent = "Could not save: " + errText(e);
+      msg.style.display = "block";
+      $("saveBtn").disabled = false;
+      $("saveBtn").textContent = "Save";
+    }
+  };
 }
 
 /* ---------- events ---------- */
@@ -348,7 +679,6 @@ async function doLogin() {
   $("loginBtn").textContent = "Please wait...";
   try {
     await signInWithEmailAndPassword(auth, email, password);
-    // onAuthStateChanged does the rest
   } catch (e) {
     let text = "Login failed. Please try again.";
     if (e.code === "auth/invalid-credential" || e.code === "auth/wrong-password" || e.code === "auth/user-not-found" || e.code === "auth/invalid-email") {

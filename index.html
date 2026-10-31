@@ -41,9 +41,12 @@
   label { display: block; font-size: 13px; font-weight: bold; color: var(--muted); margin: 0 0 6px; }
   input, select { width: 100%; padding: 15px; margin-bottom: 16px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 16px; background: #f8fafc; color: var(--text); }
   input:focus, select:focus { outline: 2px solid var(--blue); background: white; }
+  input[readonly] { background: #e2e8f0; }
   .btn { width: 100%; padding: 16px; border: 0; border-radius: 12px; background: var(--blue); color: white; font-size: 16px; font-weight: bold; }
   .btn:active { background: var(--blue-dark); }
   .btn:disabled { opacity: 0.6; }
+  .btn.green { background: var(--green); }
+  .btn.gray { background: #e2e8f0; color: #334155; }
   #loginMsg { margin-top: 16px; padding: 12px; border-radius: 12px; background: #fee2e2; color: #991b1b; font-size: 14px; display: none; word-break: break-word; }
   .link-row { margin-top: 22px; text-align: center; font-size: 13px; color: var(--muted); }
 
@@ -77,12 +80,13 @@
 
   /* Cards */
   .card { background: white; border-radius: 18px; padding: 18px; margin-bottom: 14px; box-shadow: 0 2px 12px rgba(15,23,42,0.07); }
+  .rowcard { display: block; width: 100%; border: 0; text-align: left; font: inherit; color: inherit; }
   .welcome { background: linear-gradient(160deg, #2563eb, #1e40af); color: white; }
   .welcome h2 { margin: 0 0 4px; font-size: 22px; word-break: break-word; }
   .welcome p { margin: 0 0 12px; opacity: 0.9; font-size: 14px; }
   .welcome .pill { border: 2px solid rgba(255,255,255,0.8); }
   .section-title { font-size: 15px; font-weight: bold; color: var(--muted); margin: 18px 4px 10px; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 4px; }
   .tile { background: white; border: 0; border-radius: 18px; padding: 18px 12px; text-align: center; box-shadow: 0 2px 12px rgba(15,23,42,0.07); font-size: 14px; font-weight: bold; color: var(--text); }
   .tile .ico { display: block; font-size: 30px; margin-bottom: 8px; }
   .stat { background: white; border-radius: 18px; padding: 16px; box-shadow: 0 2px 12px rgba(15,23,42,0.07); }
@@ -97,9 +101,13 @@
   .item-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
   .item-name { font-size: 17px; font-weight: bold; word-break: break-word; }
   .item-sub { font-size: 14px; color: var(--muted); margin-bottom: 4px; word-break: break-word; }
-  .st { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: bold; white-space: nowrap; }
+  .st { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: bold; white-space: nowrap; }
   .st-on { background: #dcfce7; color: #166534; }
   .st-off { background: #e2e8f0; color: #475569; }
+  .s-waiting { background: #fef3c7; color: #92400e; }
+  .s-arrived { background: #dbeafe; color: #1e40af; }
+  .s-completed { background: #dcfce7; color: #166534; }
+  .s-cancelled { background: #fee2e2; color: #991b1b; }
   .btnrow { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
   .sm { flex: 1; min-width: 90px; padding: 12px 10px; border: 0; border-radius: 10px; background: #dbeafe; color: var(--blue-dark); font-size: 14px; font-weight: bold; }
   .sm.danger { background: #fee2e2; color: #991b1b; }
@@ -112,6 +120,24 @@
   .daychip input:checked + span { background: var(--blue); color: white; }
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
+  /* Appointments */
+  .arow { display: flex; gap: 12px; }
+  .abody { flex: 1; min-width: 0; }
+  .tokbadge { min-width: 58px; height: 58px; border-radius: 14px; background: var(--blue); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; }
+  .tokbadge small { font-size: 9px; font-weight: normal; letter-spacing: 1px; }
+  .hrow { border-top: 1px solid #e2e8f0; padding: 10px 0; }
+  .rowbtn { display: flex; gap: 8px; margin-bottom: 8px; }
+  .rowbtn input { margin-bottom: 0; flex: 1; }
+  .rowbtn button { flex: none; min-width: 80px; }
+  .note { font-size: 13px; color: var(--muted); margin: 0 2px 14px; min-height: 4px; }
+  .note.ok { color: #166534; font-weight: bold; }
+  .note.bad { color: #991b1b; font-weight: bold; }
+  .tokenshow { background: #dbeafe; color: var(--blue-dark); border-radius: 12px; text-align: center; font-size: 34px; font-weight: bold; padding: 12px; margin-bottom: 6px; }
+  .okbox { text-align: center; }
+  .okbox .tick { width: 64px; height: 64px; border-radius: 50%; background: #dcfce7; color: #166534; font-size: 36px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; }
+  .okbox h3 { margin: 0 0 12px; }
+  .okbox .tokenshow { margin: 12px 0; }
+
   /* Form screen */
   #sheet { position: fixed; inset: 0; background: var(--bg); z-index: 60; overflow-y: auto; }
   .sheet-top { position: sticky; top: 0; z-index: 2; background: var(--blue); color: white; display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
@@ -120,6 +146,27 @@
   #sheetBody { padding: 16px; max-width: 800px; margin: 0 auto; }
 
   #toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: #0f172a; color: white; padding: 12px 18px; border-radius: 12px; font-size: 14px; z-index: 200; display: none; max-width: 90%; text-align: center; }
+
+  /* Print slip */
+  #printArea { display: none; }
+  .slip { max-width: 380px; margin: 0 auto; border: 2px solid #0f172a; border-radius: 12px; padding: 18px; font-family: Arial, Helvetica, sans-serif; color: #000; }
+  .slip-head { display: flex; align-items: center; gap: 12px; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 12px; }
+  .slip-logo { width: 46px; height: 46px; border-radius: 12px; background: #2563eb; color: white; font-size: 30px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+  .slip-h1 { font-size: 18px; font-weight: bold; }
+  .slip-h2 { font-size: 13px; color: #444; }
+  .slip-token { text-align: center; border: 2px dashed #0f172a; border-radius: 10px; padding: 8px; margin-bottom: 12px; }
+  .slip-token span { display: block; font-size: 12px; letter-spacing: 2px; }
+  .slip-token b { font-size: 44px; }
+  .slip table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .slip td { padding: 6px 2px; border-bottom: 1px solid #ddd; vertical-align: top; }
+  .slip td:first-child { color: #444; width: 42%; }
+  .slip td:last-child { font-weight: bold; }
+  .slip-foot { text-align: center; font-size: 12px; color: #444; margin-top: 12px; }
+  @media print {
+    body { background: white; }
+    body > *:not(#printArea) { display: none !important; }
+    #printArea { display: block !important; }
+  }
 </style>
 </head>
 <body>
@@ -180,11 +227,12 @@
 </div>
 
 <div id="toast"></div>
+<div id="printArea"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getDatabase, ref, get, set, push, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, get, set, push, update, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAZXTl8iB6fYYSVDbce5RuQQdjlxpoF5g4",
@@ -202,6 +250,8 @@ const db = getDatabase(app);
 
 const ALL = ["admin", "receptionist", "doctor"];
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAYS_JS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const MENU = [
   { id: "dashboard",    label: "Dashboard",         icon: "\u{1F3E0}", roles: ALL },
   { id: "appointments", label: "Appointments",      icon: "\u{1F4C5}", roles: ALL },
@@ -225,6 +275,10 @@ let sheetOpen = false;
 let pendingMsg = "";
 let departments = {};
 let doctors = {};
+let patients = {};
+let appts = {};
+let apptF = { q: "", date: "", doctor: "", status: "" };
+let patQ = "";
 
 /* ---------- small helpers ---------- */
 function toast(text) {
@@ -256,6 +310,18 @@ function fmtTime(t) {
   h = h % 12; if (h === 0) h = 12;
   return h + ":" + m + " " + ap;
 }
+function pad2(n) { return String(n).padStart(2, "0"); }
+function today() {
+  const d = new Date();
+  return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+}
+function fmtDate(s) {
+  if (!s) return "";
+  const p = s.split("-");
+  return parseInt(p[2], 10) + " " + MONTHS[parseInt(p[1], 10) - 1] + " " + p[0];
+}
+function stClass(s) { return "s-" + String(s || "waiting").toLowerCase(); }
+function canBook() { return me.role === "admin" || me.role === "receptionist"; }
 function currentPage() { return navStack[navStack.length - 1]; }
 function errText(e) { return (e && (e.code || e.message)) || "unknown"; }
 
@@ -263,6 +329,10 @@ async function loadData() {
   const r = await Promise.all([get(ref(db, "departments")), get(ref(db, "doctors"))]);
   departments = r[0].val() || {};
   doctors = r[1].val() || {};
+}
+async function loadAppts() {
+  const s = await get(ref(db, "appointments"));
+  appts = s.val() || {};
 }
 
 /* ---------- views ---------- */
@@ -295,6 +365,8 @@ function showApp() {
   setRolePill($("drawerRole"), me.role);
   $("drawerName").textContent = me.name;
   $("avatar").textContent = me.name.charAt(0).toUpperCase();
+  apptF = { q: "", date: today(), doctor: "", status: "" };
+  patQ = "";
   buildMenu();
   navStack = ["dashboard"];
   render("dashboard");
@@ -338,12 +410,13 @@ function closeDrawerByButton() {
   if (drawerOpen) history.back();
 }
 function openSheet(title, html) {
+  const was = sheetOpen;
   $("sheetTitle").textContent = title;
   $("sheetBody").innerHTML = html;
   $("sheet").classList.remove("hidden");
   $("sheet").scrollTop = 0;
   sheetOpen = true;
-  history.pushState({ sh: 1 }, "");
+  if (!was) history.pushState({ sh: 1 }, "");
 }
 function hideSheet() {
   sheetOpen = false;
@@ -364,7 +437,14 @@ function navigate(page) {
 }
 window.addEventListener("popstate", () => {
   if (!me) return;
-  if (sheetOpen) { hideSheet(); return; }
+  if (sheetOpen) {
+    hideSheet();
+    const p = currentPage();
+    if (p === "appointments") renderAppointments();
+    else if (p === "patients") renderPatients();
+    else if (p === "dashboard") renderDashboard();
+    return;
+  }
   if (drawerOpen) { hideDrawer(); return; }
   if (navStack.length > 1) {
     navStack.pop();
@@ -390,6 +470,12 @@ function render(page) {
   } else if (page === "doctors") {
     c.innerHTML = '<div class="card soon"><p>Loading...</p></div>';
     renderDoctors();
+  } else if (page === "patients") {
+    c.innerHTML = "";
+    renderPatients();
+  } else if (page === "appointments") {
+    c.innerHTML = "";
+    renderAppointments();
   } else {
     c.innerHTML =
       '<div class="card soon"><div class="ico">' + item.icon + "</div><h3>" + item.label +
@@ -401,7 +487,9 @@ function renderDashboard() {
   const c = $("content");
   c.innerHTML =
     '<div class="card welcome"><h2 id="wName"></h2><p>Welcome to Hospital Management</p><span id="wRole" class="pill"></span></div>' +
-    '<div class="grid"><div class="stat"><div class="num" id="sDoc">-</div><div class="lbl">Doctors</div></div>' +
+    '<div class="grid"><div class="stat"><div class="num" id="sPat">-</div><div class="lbl">Patients</div></div>' +
+    '<div class="stat"><div class="num" id="sToday">-</div><div class="lbl">Today\'s appointments</div></div>' +
+    '<div class="stat"><div class="num" id="sDoc">-</div><div class="lbl">Doctors</div></div>' +
     '<div class="stat"><div class="num" id="sDept">-</div><div class="lbl">Departments</div></div></div>' +
     '<div class="section-title">QUICK ACCESS</div><div class="grid" id="tiles"></div>';
   $("wName").textContent = "Hello, " + me.name;
@@ -414,10 +502,22 @@ function renderDashboard() {
     b.onclick = () => navigate(m.id);
     tiles.appendChild(b);
   });
-  loadData().then(() => {
+  Promise.all([loadData(), get(ref(db, "patients")), get(ref(db, "appointments"))]).then((r) => {
     if (currentPage() !== "dashboard") return;
+    const pats = r[1].val() || {};
+    const aps = r[2].val() || {};
+    const t = today();
+    let n = 0;
+    Object.keys(aps).forEach((k) => {
+      const a = aps[k];
+      if (a.date === t && a.status !== "Cancelled") {
+        if (me.role !== "doctor" || a.doctorId === me.doctorId) n++;
+      }
+    });
     $("sDoc").textContent = Object.keys(doctors).length;
     $("sDept").textContent = Object.keys(departments).length;
+    $("sPat").textContent = Object.keys(pats).length;
+    $("sToday").textContent = n;
   }).catch(() => {});
 }
 
@@ -485,7 +585,6 @@ function deptForm(id) {
     '<input id="fName" type="text" placeholder="Example: Cardiology" maxlength="60">' +
     '<button class="btn" id="saveBtn">Save</button><div class="formmsg" id="formMsg"></div></div>');
   $("fName").value = id ? (departments[id].name || "") : "";
-  $("sheetBack").onclick = closeSheetByButton;
   $("saveBtn").onclick = async () => {
     const name = $("fName").value.trim();
     const msg = $("formMsg");
@@ -608,7 +707,6 @@ function doctorForm(id) {
   $("fTo").value = d.timeTo || "";
   $("fActive").value = d.active === false ? "0" : "1";
   $("fDays").querySelectorAll("input").forEach((i) => { i.checked = chosen.includes(i.value); });
-  $("sheetBack").onclick = closeSheetByButton;
   $("saveBtn").onclick = async () => {
     const msg = $("formMsg");
     msg.style.display = "none";
@@ -656,9 +754,421 @@ function doctorForm(id) {
   };
 }
 
+/* ----- Patients ----- */
+async function renderPatients() {
+  const c = $("content");
+  if (!$("patList")) {
+    c.innerHTML =
+      (canBook() ? '<button class="btn" id="newApptBtn">+ New appointment</button><div style="height:14px"></div>' : "") +
+      '<input id="patSearch" type="search" placeholder="Search by ID, name or phone">' +
+      '<div id="patList"><div class="card empty">Loading...</div></div>';
+    if (canBook()) $("newApptBtn").onclick = () => apptForm("");
+    $("patSearch").value = patQ;
+    $("patSearch").oninput = () => { patQ = $("patSearch").value; drawPatients(); };
+  }
+  try {
+    const s = await get(ref(db, "patients"));
+    patients = s.val() || {};
+  } catch (e) {
+    if (currentPage() !== "patients" || !$("patList")) return;
+    $("patList").innerHTML = '<div class="card empty">Could not load: ' + esc(errText(e)) + "</div>";
+    return;
+  }
+  if (currentPage() !== "patients") return;
+  drawPatients();
+}
+
+function drawPatients() {
+  const box = $("patList");
+  if (!box) return;
+  const q = patQ.trim().toLowerCase();
+  let list = Object.keys(patients).map((k) => Object.assign({ id: k }, patients[k]));
+  const total = list.length;
+  if (q) {
+    list = list.filter((p) => p.id.indexOf(q) >= 0 || String(p.name || "").toLowerCase().indexOf(q) >= 0 || String(p.phone || "").indexOf(q) >= 0);
+  }
+  list.sort((a, b) => b.id.localeCompare(a.id));
+  if (!list.length) {
+    box.innerHTML = '<div class="card empty">' + (total ? "No patient found." : "No patients yet.<br>A patient is added when you make the first appointment.") + "</div>";
+    return;
+  }
+  let html = '<div class="item-sub" style="margin:0 4px 10px">' + list.length + " patient(s)</div>";
+  list.slice(0, 100).forEach((p) => {
+    html += '<button class="card rowcard" data-id="' + esc(p.id) + '"><div class="item-top"><div class="item-name">' + esc(p.name) +
+      '</div><span class="st st-on">' + esc(p.id) + '</span></div><div class="item-sub">' + esc(p.phone) + " | Age " + esc(p.age) + "</div></button>";
+  });
+  if (list.length > 100) html += '<div class="empty">Showing the first 100. Use search to find others.</div>';
+  box.innerHTML = html;
+  box.querySelectorAll("button[data-id]").forEach((b) => { b.onclick = () => patientDetail(b.dataset.id); });
+}
+
+function histRows(list) {
+  if (!list.length) return '<div class="item-sub">None</div>';
+  return list.map((a) =>
+    '<div class="hrow"><div><b>' + esc(fmtDate(a.date)) + "</b> | Token " + esc(a.token) + '</div><div class="item-sub">' +
+    esc(a.doctorName) + " | " + esc(a.departmentName || "") + '</div><span class="st ' + stClass(a.status) + '">' + esc(a.status) + "</span></div>"
+  ).join("");
+}
+
+async function patientDetail(id) {
+  const p = patients[id];
+  if (!p) return;
+  openSheet("Patient " + id,
+    '<div class="card"><div class="item-name">' + esc(p.name) + '</div>' +
+    '<div class="item-sub">Patient ID: ' + esc(id) + "</div>" +
+    '<div class="item-sub">Phone: ' + esc(p.phone) + " | Age: " + esc(p.age) + "</div>" +
+    '<div class="item-sub">Registered: ' + esc(p.registeredAt ? fmtDate(new Date(p.registeredAt).getFullYear() + "-" + pad2(new Date(p.registeredAt).getMonth() + 1) + "-" + pad2(new Date(p.registeredAt).getDate())) : "") + "</div>" +
+    (canBook() ? '<div class="btnrow"><button class="sm" id="histNew">+ New appointment</button></div>' : "") + "</div>" +
+    '<div class="card"><div class="item-name">Upcoming appointments</div><div id="histUp">Loading...</div></div>' +
+    '<div class="card"><div class="item-name">Previous appointments</div><div id="histPrev">Loading...</div></div>');
+  if (canBook()) $("histNew").onclick = () => apptForm(id);
+  try {
+    await loadAppts();
+  } catch (e) {
+    if (!sheetOpen || !$("histUp")) return;
+    $("histUp").textContent = "Could not load: " + errText(e);
+    $("histPrev").textContent = "";
+    return;
+  }
+  if (!sheetOpen || !$("histUp")) return;
+  const mine = Object.keys(appts).map((k) => Object.assign({ id: k }, appts[k])).filter((a) => a.patientId === id);
+  const t = today();
+  const isUp = (a) => a.date >= t && a.status !== "Cancelled";
+  $("histUp").innerHTML = histRows(mine.filter(isUp).sort((a, b) => a.date.localeCompare(b.date)));
+  $("histPrev").innerHTML = histRows(mine.filter((a) => !isUp(a)).sort((a, b) => b.date.localeCompare(a.date)));
+}
+
+/* ----- New appointment (one page) ----- */
+async function apptForm(prefillPid) {
+  try {
+    await loadData();
+  } catch (e) {
+    toast("Could not load doctors: " + errText(e));
+    return;
+  }
+  const docs = listOf(doctors).filter((d) => d.active !== false && departments[d.departmentId] && departments[d.departmentId].active !== false);
+  if (docs.length === 0) { toast("Please add an active doctor first."); return; }
+  let opts = '<option value="">Choose doctor</option>';
+  docs.forEach((d) => { opts += '<option value="' + esc(d.id) + '">' + esc(d.name) + " - " + esc(d.specialty || "") + "</option>"; });
+
+  openSheet("New appointment",
+    '<div class="card">' +
+    '<label for="fPid">Patient ID (leave empty for a new patient)</label>' +
+    '<div class="rowbtn"><input id="fPid" type="text" inputmode="numeric" maxlength="6" placeholder="Example: 000001"><button class="sm" id="findBtn" type="button">Find</button></div>' +
+    '<div class="note" id="pidMsg"></div>' +
+    '<label for="fPname">Patient name</label><input id="fPname" type="text" maxlength="60" placeholder="Full name">' +
+    '<label for="fPphone">Phone number</label><input id="fPphone" type="tel" maxlength="15" placeholder="03001234567">' +
+    '<label for="fPage">Age</label><input id="fPage" type="number" inputmode="numeric" min="0" max="120" placeholder="Years">' +
+    '<label for="fDate">Appointment date</label><input id="fDate" type="date">' +
+    '<label for="fDoc">Doctor</label><select id="fDoc">' + opts + "</select>" +
+    '<div class="note" id="dayWarn"></div>' +
+    '<label for="fDept">Department</label><input id="fDept" type="text" readonly placeholder="Shown after you choose a doctor">' +
+    '<label>Token number</label><div class="tokenshow" id="tokShow">-</div>' +
+    '<div class="note">The final token is given when you save.</div>' +
+    '<label for="fFee">Doctor\'s fee (Rs)</label><input id="fFee" type="text" readonly placeholder="Shown after you choose a doctor">' +
+    '<button class="btn" id="saveBtn">Save Appointment</button><div style="height:10px"></div>' +
+    '<button class="btn green" id="savePrintBtn">Save and Print Slip</button><div style="height:10px"></div>' +
+    '<button class="btn gray" id="clearBtn">Clear Form</button>' +
+    '<div class="formmsg" id="formMsg"></div></div>');
+
+  let loaded = null;
+  let tokSeq = 0;
+  $("fDate").value = today();
+  $("fDate").min = today();
+
+  function setPidMsg(text, kind) {
+    if (!$("pidMsg")) return;
+    $("pidMsg").textContent = text;
+    $("pidMsg").className = "note " + (kind || "");
+  }
+  function lockFields(lock) {
+    ["fPname", "fPphone", "fPage"].forEach((i) => { $(i).readOnly = lock; });
+  }
+  function unloadPatient() { loaded = null; lockFields(false); }
+  function clearPatientFields() {
+    $("fPname").value = ""; $("fPphone").value = ""; $("fPage").value = "";
+  }
+
+  async function loadPatient() {
+    const digits = $("fPid").value.replace(/\D/g, "");
+    if (!digits) return;
+    const pid = digits.padStart(6, "0");
+    $("fPid").value = pid;
+    setPidMsg("Looking for patient...", "");
+    try {
+      const s = await get(ref(db, "patients/" + pid));
+      if (!$("fPid") || $("fPid").value !== pid) return;
+      if (s.exists()) {
+        loaded = Object.assign({ id: pid }, s.val());
+        $("fPname").value = loaded.name || "";
+        $("fPphone").value = loaded.phone || "";
+        $("fPage").value = loaded.age != null ? loaded.age : "";
+        lockFields(true);
+        setPidMsg("Patient found. Choose the date and doctor.", "ok");
+      } else {
+        unloadPatient();
+        setPidMsg("No patient with this ID.", "bad");
+      }
+    } catch (e) {
+      if ($("pidMsg")) setPidMsg("Could not search: " + errText(e), "bad");
+    }
+  }
+
+  async function updateToken() {
+    const date = $("fDate").value;
+    const did = $("fDoc").value;
+    const my = ++tokSeq;
+    $("dayWarn").textContent = "";
+    if (!did) {
+      $("tokShow").textContent = "-";
+      $("fDept").value = "";
+      $("fFee").value = "";
+      return;
+    }
+    const d = doctors[did];
+    $("fDept").value = departments[d.departmentId] ? departments[d.departmentId].name : "";
+    $("fFee").value = d.fee != null ? d.fee : 0;
+    if (!date) { $("tokShow").textContent = "-"; return; }
+    const wd = DAYS_JS[new Date(date + "T00:00:00").getDay()];
+    if (d.days && String(d.days).split(",").indexOf(wd) < 0) {
+      $("dayWarn").textContent = "Note: " + d.name + " does not normally sit on " + wd + ".";
+    }
+    $("tokShow").textContent = "...";
+    try {
+      const s = await get(ref(db, "counters/tokens/" + date + "/" + did));
+      if (my !== tokSeq || !$("tokShow")) return;
+      $("tokShow").textContent = String((s.val() || 0) + 1);
+    } catch (e) {
+      if (my !== tokSeq || !$("tokShow")) return;
+      $("tokShow").textContent = "?";
+    }
+  }
+
+  function setBusy(busy) {
+    $("saveBtn").disabled = busy;
+    $("savePrintBtn").disabled = busy;
+    $("saveBtn").textContent = busy ? "Saving..." : "Save Appointment";
+    $("savePrintBtn").textContent = busy ? "Saving..." : "Save and Print Slip";
+  }
+
+  function showSaved(a) {
+    $("sheetBody").innerHTML =
+      '<div class="card okbox"><div class="tick">&#10003;</div><h3>Appointment saved</h3>' +
+      '<div class="item-name">' + esc(a.patientName) + "</div>" +
+      '<div class="item-sub">Patient ID: <b>' + esc(a.patientId) + "</b></div>" +
+      '<div class="item-sub">' + esc(a.doctorName) + " | " + esc(a.departmentName) + "</div>" +
+      '<div class="item-sub">' + esc(fmtDate(a.date)) + " | Fee: Rs " + esc(a.fee) + "</div>" +
+      '<div class="tokenshow">Token ' + esc(a.token) + "</div>" +
+      '<button class="btn green" id="okPrint">Print Slip</button><div style="height:10px"></div>' +
+      '<button class="btn" id="okAgain">New appointment</button><div style="height:10px"></div>' +
+      '<button class="btn gray" id="okClose">Close</button></div>';
+    $("sheet").scrollTop = 0;
+    $("okPrint").onclick = () => printSlip(a);
+    $("okAgain").onclick = () => apptForm("");
+    $("okClose").onclick = closeSheetByButton;
+  }
+
+  async function save(doPrint) {
+    const msg = $("formMsg");
+    msg.style.display = "none";
+    const pidTyped = $("fPid").value.trim();
+    const name = $("fPname").value.trim();
+    const phone = $("fPphone").value.trim();
+    const ageT = $("fPage").value.trim();
+    const date = $("fDate").value;
+    const did = $("fDoc").value;
+    let problem = "";
+    if (pidTyped && !loaded) problem = "Patient ID not found. Clear the ID box to add a new patient.";
+    else if (!name) problem = "Please type the patient name.";
+    else if (!/^[0-9+\- ]{7,15}$/.test(phone)) problem = "Please type a correct phone number.";
+    else if (ageT === "" || isNaN(Number(ageT)) || Number(ageT) < 0 || Number(ageT) > 120) problem = "Please type a correct age (0 to 120).";
+    else if (!date) problem = "Please choose the appointment date.";
+    else if (date < today()) problem = "The date cannot be in the past.";
+    else if (!did) problem = "Please choose a doctor.";
+    if (problem) { msg.textContent = problem; msg.style.display = "block"; return; }
+    const d = doctors[did];
+    setBusy(true);
+    let createdPid = "";
+    try {
+      let p;
+      if (loaded) {
+        p = loaded;
+      } else {
+        const r = await runTransaction(ref(db, "counters/patientSerial"), (cur) => (cur || 0) + 1);
+        const pid = String(r.snapshot.val()).padStart(6, "0");
+        p = { id: pid, name: name, phone: phone, age: Number(ageT), registeredAt: Date.now(), createdBy: me.uid };
+        await set(ref(db, "patients/" + pid), p);
+        createdPid = pid;
+      }
+      const tr = await runTransaction(ref(db, "counters/tokens/" + date + "/" + did), (cur) => (cur || 0) + 1);
+      const token = tr.snapshot.val();
+      const aref = push(ref(db, "appointments"));
+      const a = {
+        patientId: p.id, patientName: p.name, phone: p.phone, age: p.age,
+        doctorId: did, doctorName: d.name, departmentId: d.departmentId,
+        departmentName: departments[d.departmentId] ? departments[d.departmentId].name : "",
+        date: date, token: token, fee: Number(d.fee || 0),
+        status: "Waiting", paymentStatus: "Unpaid", createdAt: Date.now(), createdBy: me.uid
+      };
+      await set(aref, a);
+      a.id = aref.key;
+      showSaved(a);
+      if (doPrint) printSlip(a);
+    } catch (e) {
+      let text = "Could not save: " + errText(e);
+      if (createdPid) text += ". The patient was saved with ID " + createdPid + ", but the appointment was not. Type this ID above and try again.";
+      msg.textContent = text;
+      msg.style.display = "block";
+      setBusy(false);
+    }
+  }
+
+  $("fPid").oninput = () => {
+    const v = $("fPid").value.replace(/\D/g, "");
+    $("fPid").value = v;
+    if (loaded && v !== loaded.id) { unloadPatient(); clearPatientFields(); }
+    if (!v) setPidMsg("", "");
+    if (v.length === 6) loadPatient();
+  };
+  $("findBtn").onclick = () => {
+    if (!$("fPid").value.trim()) { setPidMsg("Type a Patient ID first, or leave it empty for a new patient.", "bad"); return; }
+    loadPatient();
+  };
+  $("fDoc").onchange = updateToken;
+  $("fDate").onchange = updateToken;
+  $("saveBtn").onclick = () => save(false);
+  $("savePrintBtn").onclick = () => save(true);
+  $("clearBtn").onclick = () => {
+    unloadPatient();
+    $("fPid").value = "";
+    clearPatientFields();
+    $("fDate").value = today();
+    $("fDoc").value = "";
+    $("formMsg").style.display = "none";
+    setPidMsg("", "");
+    updateToken();
+  };
+
+  if (prefillPid) {
+    $("fPid").value = prefillPid;
+    loadPatient();
+  }
+}
+
+/* ----- Slip ----- */
+function printSlip(a) {
+  function row(l, v) { return "<tr><td>" + l + "</td><td>" + esc(v) + "</td></tr>"; }
+  $("printArea").innerHTML =
+    '<div class="slip"><div class="slip-head"><div class="slip-logo">+</div><div><div class="slip-h1">Hospital Management</div>' +
+    '<div class="slip-h2">Appointment Slip</div></div></div>' +
+    '<div class="slip-token"><span>TOKEN</span><b>' + esc(a.token) + "</b></div><table>" +
+    row("Patient name", a.patientName) + row("Patient ID", a.patientId) + row("Phone", a.phone) + row("Age", a.age) +
+    row("Doctor", a.doctorName) + row("Department", a.departmentName) + row("Date", fmtDate(a.date)) +
+    row("Fee", "Rs " + a.fee) + row("Payment", a.paymentStatus || "Unpaid") +
+    '</table><div class="slip-foot">Please keep this slip with you.</div></div>';
+  setTimeout(() => { window.print(); }, 200);
+}
+
+/* ----- Appointments list ----- */
+async function renderAppointments() {
+  const c = $("content");
+  if (me.role === "doctor" && !me.doctorId) {
+    c.innerHTML = '<div class="card empty">Your login is not linked to a doctor yet.<br>Ask the Admin.</div>';
+    return;
+  }
+  if (!$("apptList")) {
+    try { await loadData(); } catch (e) { /* ignore */ }
+    if (currentPage() !== "appointments") return;
+    let dopts = '<option value="">All doctors</option>';
+    listOf(doctors).forEach((d) => { dopts += '<option value="' + esc(d.id) + '">' + esc(d.name) + "</option>"; });
+    c.innerHTML =
+      (canBook() ? '<button class="btn" id="newApptBtn">+ New appointment</button><div style="height:14px"></div>' : "") +
+      '<input id="apSearch" type="search" placeholder="Search by Patient ID or name">' +
+      '<div class="two"><div><label for="apDate">Date</label><input id="apDate" type="date"></div>' +
+      '<div><label for="apStatus">Status</label><select id="apStatus"><option value="">All</option><option>Waiting</option><option>Arrived</option><option>Completed</option><option>Cancelled</option></select></div></div>' +
+      (me.role !== "doctor" ? '<label for="apDoc">Doctor</label><select id="apDoc">' + dopts + "</select>" : "") +
+      '<button class="sm gray" id="apAll" style="width:100%;margin-bottom:14px">Show all dates</button>' +
+      '<div id="apptList"><div class="card empty">Loading...</div></div>';
+    if (canBook()) $("newApptBtn").onclick = () => apptForm("");
+    $("apSearch").value = apptF.q;
+    $("apDate").value = apptF.date;
+    $("apStatus").value = apptF.status;
+    if ($("apDoc")) $("apDoc").value = apptF.doctor;
+    $("apSearch").oninput = () => { apptF.q = $("apSearch").value; drawAppts(); };
+    $("apDate").onchange = () => { apptF.date = $("apDate").value; drawAppts(); };
+    $("apStatus").onchange = () => { apptF.status = $("apStatus").value; drawAppts(); };
+    if ($("apDoc")) $("apDoc").onchange = () => { apptF.doctor = $("apDoc").value; drawAppts(); };
+    $("apAll").onclick = () => { apptF.date = ""; $("apDate").value = ""; drawAppts(); };
+  }
+  try {
+    await loadAppts();
+  } catch (e) {
+    if (currentPage() !== "appointments" || !$("apptList")) return;
+    $("apptList").innerHTML = '<div class="card empty">Could not load: ' + esc(errText(e)) + "</div>";
+    return;
+  }
+  if (currentPage() !== "appointments") return;
+  drawAppts();
+}
+
+function drawAppts() {
+  const box = $("apptList");
+  if (!box) return;
+  const q = apptF.q.trim().toLowerCase();
+  let list = Object.keys(appts).map((k) => Object.assign({ id: k }, appts[k]));
+  if (me.role === "doctor") list = list.filter((a) => a.doctorId === me.doctorId);
+  if (apptF.date) list = list.filter((a) => a.date === apptF.date);
+  if (apptF.doctor) list = list.filter((a) => a.doctorId === apptF.doctor);
+  if (apptF.status) list = list.filter((a) => a.status === apptF.status);
+  if (q) list = list.filter((a) => String(a.patientId).indexOf(q) >= 0 || String(a.patientName || "").toLowerCase().indexOf(q) >= 0);
+  list.sort((a, b) => b.date.localeCompare(a.date) || String(a.doctorName).localeCompare(String(b.doctorName)) || a.token - b.token);
+  if (!list.length) {
+    box.innerHTML = '<div class="card empty">No appointments found.</div>';
+    return;
+  }
+  let html = '<div class="item-sub" style="margin:0 4px 10px">' + list.length + " appointment(s)</div>";
+  list.forEach((a) => {
+    let btns = "";
+    if (canBook()) {
+      if (a.status !== "Cancelled") {
+        ["Waiting", "Arrived", "Completed"].forEach((s) => {
+          if (s !== a.status) btns += '<button class="sm" data-act="' + s + '" data-id="' + esc(a.id) + '">' + s + "</button>";
+        });
+        btns += '<button class="sm danger" data-act="Cancelled" data-id="' + esc(a.id) + '">Cancel</button>';
+      }
+      btns += '<button class="sm gray" data-act="slip" data-id="' + esc(a.id) + '">Slip</button>';
+    }
+    html += '<div class="card"><div class="arow"><div class="tokbadge"><small>TOKEN</small>' + esc(a.token) + "</div>" +
+      '<div class="abody"><div class="item-top"><div class="item-name">' + esc(a.patientName) + "</div>" +
+      '<span class="st ' + stClass(a.status) + '">' + esc(a.status) + "</span></div>" +
+      '<div class="item-sub">ID ' + esc(a.patientId) + " | " + esc(a.phone) + " | Age " + esc(a.age) + "</div>" +
+      '<div class="item-sub">' + esc(a.doctorName) + " | " + esc(a.departmentName || "") + "</div>" +
+      '<div class="item-sub">' + esc(fmtDate(a.date)) + " | Rs " + esc(a.fee) + " | " + esc(a.paymentStatus || "Unpaid") + "</div></div></div>" +
+      (btns ? '<div class="btnrow">' + btns + "</div>" : "") + "</div>";
+  });
+  box.innerHTML = html;
+  box.querySelectorAll("button[data-act]").forEach((b) => { b.onclick = () => apptAction(b.dataset.act, b.dataset.id); });
+}
+
+async function apptAction(act, id) {
+  const a = appts[id];
+  if (!a) return;
+  if (act === "slip") { printSlip(Object.assign({ id: id }, a)); return; }
+  if (act === "Cancelled" && !confirm("Cancel this appointment? The token number will not be used again.")) return;
+  try {
+    await update(ref(db, "appointments/" + id), { status: act });
+    await loadAppts();
+    drawAppts();
+    toast("Status: " + act);
+  } catch (e) {
+    toast("Error: " + errText(e));
+  }
+}
+
 /* ---------- events ---------- */
 $("menuBtn").onclick = openDrawer;
 $("overlay").onclick = closeDrawerByButton;
+$("sheetBack").onclick = closeSheetByButton;
 $("logoutBtn").onclick = async () => {
   if (confirm("Do you want to log out?")) {
     await signOut(auth);
@@ -723,7 +1233,7 @@ onAuthStateChanged(auth, async (user) => {
       await signOut(auth);
       return;
     }
-    me = { uid: user.uid, name: u.name || "User", role: u.role };
+    me = { uid: user.uid, name: u.name || "User", role: u.role, doctorId: u.doctorId || "" };
     showApp();
   } catch (e) {
     pendingMsg = "Could not load your account: " + e.code;

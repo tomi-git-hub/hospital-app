@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#2563eb">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Hospital Management</title>
 <style>
   :root {
@@ -41,6 +43,7 @@
   textarea { min-height: 90px; resize: vertical; }
   input:focus, select:focus, textarea:focus { outline: 2px solid var(--blue); background: white; }
   input[readonly] { background: #e2e8f0; }
+  select:disabled { background: #e2e8f0; }
   .btn { width: 100%; padding: 16px; border: 0; border-radius: 12px; background: var(--blue); color: white; font-size: 16px; font-weight: bold; }
   .btn:active { background: var(--blue-dark); }
   .btn:disabled { opacity: 0.6; }
@@ -48,6 +51,7 @@
   .btn.gray { background: #e2e8f0; color: #334155; }
   #loginMsg { margin-top: 16px; padding: 12px; border-radius: 12px; background: #fee2e2; color: #991b1b; font-size: 14px; display: none; word-break: break-word; }
   .link-row { margin-top: 22px; text-align: center; font-size: 13px; color: var(--muted); }
+  .linkbtn { background: none; border: 0; color: var(--blue); font-size: 13px; font-weight: bold; text-decoration: underline; padding: 8px; }
 
   #appView { min-height: 100%; }
   header { position: sticky; top: 0; z-index: 20; background: var(--blue); color: white; display: flex; align-items: center; gap: 12px; padding: 12px 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
@@ -148,11 +152,25 @@
   .logoprev { width: 90px; height: 90px; border-radius: 16px; border: 1px solid #cbd5e1; background: #f8fafc; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 10px; color: var(--muted); font-size: 12px; }
   .logoprev img { max-width: 100%; max-height: 100%; }
 
+  .chart { display: flex; align-items: flex-end; gap: 6px; overflow-x: auto; padding: 6px 0 4px; }
+  .chart .col { min-width: 36px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+  .chart .bar { width: 100%; border-radius: 6px 6px 0 0; min-height: 2px; }
+  .chart .cval { font-size: 10px; color: var(--muted); height: 14px; }
+  .chart .clab { font-size: 10px; color: var(--muted); text-align: center; line-height: 1.2; margin-top: 4px; }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .tbl th { text-align: left; color: var(--muted); font-size: 12px; padding: 6px 4px; border-bottom: 2px solid #e2e8f0; }
+  .tbl td { padding: 8px 4px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+  .tbl th.r, .tbl td.r { text-align: right; }
+  .scrollx { overflow-x: auto; }
+  .legal p { font-size: 14px; line-height: 1.5; margin: 0 0 10px; }
+  .legal h3 { margin: 16px 0 8px; font-size: 16px; }
+
   #sheet { position: fixed; inset: 0; background: var(--bg); z-index: 60; overflow-y: auto; }
+  #legal { position: fixed; inset: 0; background: var(--bg); z-index: 120; overflow-y: auto; }
   .sheet-top { position: sticky; top: 0; z-index: 2; background: var(--blue); color: white; display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
-  #sheetBack { background: rgba(255,255,255,0.18); border: 0; color: white; width: 44px; height: 44px; border-radius: 12px; font-size: 22px; }
-  #sheetTitle { font-size: 18px; font-weight: bold; }
-  #sheetBody { padding: 16px; max-width: 800px; margin: 0 auto; }
+  #sheetBack, #legalBack { background: rgba(255,255,255,0.18); border: 0; color: white; width: 44px; height: 44px; border-radius: 12px; font-size: 22px; }
+  #sheetTitle, .legal-title { font-size: 18px; font-weight: bold; }
+  #sheetBody, #legalBody { padding: 16px; max-width: 800px; margin: 0 auto; }
 
   #toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: #0f172a; color: white; padding: 12px 18px; border-radius: 12px; font-size: 14px; z-index: 200; display: none; max-width: 90%; text-align: center; }
 
@@ -201,7 +219,7 @@
     <input id="password" type="password" autocomplete="current-password" placeholder="Your password">
     <button id="loginBtn" class="btn">Log in</button>
     <div id="loginMsg"></div>
-    <div class="link-row">Ask the Admin if you do not have a login.</div>
+    <div class="link-row">Ask the Admin if you do not have a login.<br><button id="legalLogin" class="linkbtn">Privacy and Terms</button></div>
   </div>
 </div>
 
@@ -223,6 +241,7 @@
     </div>
     <div id="menuList"></div>
     <div class="drawer-foot">
+      <button id="legalDrawer" class="menu-item" style="font-size:14px"><span class="ico">&#128220;</span> Privacy and Terms</button>
       <button id="logoutBtn" class="logout"><span>&#128682;</span> Log out</button>
     </div>
   </aside>
@@ -236,12 +255,20 @@
   </div>
 </div>
 
+<div id="legal" class="hidden">
+  <div class="sheet-top">
+    <button id="legalBack" aria-label="Back">&#8592;</button>
+    <div class="legal-title">Privacy and Terms</div>
+  </div>
+  <div id="legalBody" class="legal"></div>
+</div>
+
 <div id="toast"></div>
 <div id="printArea"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getDatabase, ref, get, set, push, update, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
@@ -257,6 +284,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
+const app2 = initializeApp(firebaseConfig, "second");
+const auth2 = getAuth(app2);
 
 const ALL = ["admin", "receptionist", "doctor"];
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -282,6 +311,7 @@ let me = null;
 let navStack = [];
 let drawerOpen = false;
 let sheetOpen = false;
+let legalOpen = false;
 let pendingMsg = "";
 let departments = {};
 let doctors = {};
@@ -289,6 +319,7 @@ let patients = {};
 let appts = {};
 let followups = {};
 let payments = {};
+let staffList = {};
 let hospital = { name: "Hospital Management", address: "", phone: "", logo: "" };
 let apptF = { q: "", date: "", doctor: "", status: "" };
 let fuF = { q: "", status: "" };
@@ -296,6 +327,7 @@ let patF = { q: "", from: "", to: "", doctor: "" };
 let tokF = { date: "", doctor: "" };
 let payF = { tab: "unpaid", q: "", from: "", to: "" };
 let slipF = { q: "", date: "", doctor: "" };
+let repF = { from: "", to: "" };
 
 /* ---------- small helpers ---------- */
 function toast(text) {
@@ -313,6 +345,9 @@ function setRolePill(el, role) {
   el.className = "pill role-" + role;
   el.textContent = cap(role);
 }
+function rolePillHtml(role) {
+  return '<span class="pill role-' + esc(role) + '">' + esc(cap(String(role || "unknown"))) + "</span>";
+}
 function menuForRole(role) { return MENU.filter((m) => m.roles.includes(role)); }
 function listOf(obj) {
   return Object.keys(obj).map((id) => Object.assign({ id: id }, obj[id]))
@@ -328,9 +363,12 @@ function fmtTime(t) {
   return h + ":" + m + " " + ap;
 }
 function pad2(n) { return String(n).padStart(2, "0"); }
-function today() {
-  const d = new Date();
-  return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+function ymd(d) { return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
+function today() { return ymd(new Date()); }
+function addDays(s, n) {
+  const d = new Date(s + "T00:00:00");
+  d.setDate(d.getDate() + n);
+  return ymd(d);
 }
 function fmtDate(s) {
   if (!s) return "";
@@ -407,6 +445,7 @@ function showApp() {
   tokF = { date: today(), doctor: "" };
   payF = { tab: "unpaid", q: "", from: "", to: "" };
   slipF = { q: "", date: today(), doctor: "" };
+  repF = { from: addDays(today(), -6), to: today() };
   buildMenu();
   navStack = ["dashboard"];
   render("dashboard");
@@ -430,11 +469,11 @@ function buildMenu() {
 }
 function highlightMenu(page) {
   document.querySelectorAll(".menu-item").forEach((b) => {
-    b.classList.toggle("active", b.dataset.page === page);
+    if (b.dataset.page) b.classList.toggle("active", b.dataset.page === page);
   });
 }
 
-/* ---------- drawer, form screen, back button ---------- */
+/* ---------- drawer, form screen, legal, back button ---------- */
 function openDrawer() {
   drawerOpen = true;
   $("drawer").classList.add("open");
@@ -465,6 +504,34 @@ function hideSheet() {
 function closeSheetByButton() {
   if (sheetOpen) history.back();
 }
+function legalHtml() {
+  return '<div class="card">' +
+    "<p><b>Note for the owner:</b> this is a simple starter text. Before real patients use this app, ask a lawyer to review and replace it.</p>" +
+    "<h3>Privacy Policy</h3>" +
+    "<p>This app is for hospital staff only. It stores patient names, phone numbers, ages, appointments, payments and doctor notes.</p>" +
+    "<p>The data is saved in the hospital's own Firebase database. Only staff with an active login can open it. Each role sees only what it needs: the Receptionist handles patients, appointments and payments, and the Doctor sees patient records and notes.</p>" +
+    "<p>We do not sell patient data and we do not show ads. The hospital is responsible for keeping staff passwords private and for giving access only to the right people.</p>" +
+    "<p>Staff can ask the Admin to turn off an account at any time. The Admin can download a backup of the data from Settings.</p>" +
+    "<h3>Terms of Use</h3>" +
+    "<p>Use this app only for hospital work. Do not share your login with anyone. Do not copy patient data outside the hospital without permission.</p>" +
+    "<p>Staff must enter correct information. The hospital is responsible for medical decisions. This app only helps to manage appointments, tokens and payments.</p>" +
+    "<p>The app is given as it is. Please keep backups of important data.</p>" +
+    "</div>";
+}
+function openLegal() {
+  $("legalBody").innerHTML = legalHtml();
+  $("legal").classList.remove("hidden");
+  $("legal").scrollTop = 0;
+  if (!legalOpen) history.pushState({ lg: 1 }, "");
+  legalOpen = true;
+}
+function hideLegal() {
+  legalOpen = false;
+  $("legal").classList.add("hidden");
+}
+function closeLegalByButton() {
+  if (legalOpen) history.back();
+}
 function navigate(page) {
   if (page === currentPage()) { closeDrawerByButton(); return; }
   if (drawerOpen) {
@@ -476,6 +543,7 @@ function navigate(page) {
   render(page);
 }
 window.addEventListener("popstate", () => {
+  if (legalOpen) { hideLegal(); return; }
   if (!me) return;
   if (sheetOpen) {
     hideSheet();
@@ -486,6 +554,7 @@ window.addEventListener("popstate", () => {
     else if (p === "tokens") renderTokens();
     else if (p === "payments") renderPayments();
     else if (p === "slips") renderSlips();
+    else if (p === "staff") renderStaff();
     else if (p === "dashboard") renderDashboard();
     return;
   }
@@ -535,6 +604,12 @@ function render(page) {
   } else if (page === "settings") {
     c.innerHTML = '<div class="card soon"><p>Loading...</p></div>';
     renderSettings();
+  } else if (page === "staff") {
+    c.innerHTML = '<div class="card soon"><p>Loading...</p></div>';
+    renderStaff();
+  } else if (page === "reports") {
+    c.innerHTML = "";
+    renderReports();
   } else {
     c.innerHTML =
       '<div class="card soon"><div class="ico">' + item.icon + "</div><h3>" + item.label +
@@ -920,18 +995,72 @@ function histRows(list) {
   ).join("");
 }
 
+async function loadNotes(pid) {
+  try {
+    const s = await get(ref(db, "consultations"));
+    const all = s.val() || {};
+    const mine = Object.keys(all).map((k) => all[k]).filter((n) => n.patientId === pid)
+      .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+    if (!sheetOpen || !$("cnList")) return;
+    $("cnList").innerHTML = mine.length
+      ? mine.map((n) => '<div class="hrow"><div><b>' + esc(fmtDate(n.date)) + "</b> | " + esc(n.doctorName) +
+          '</div><div class="item-sub" style="white-space:pre-wrap">' + esc(n.notes) + "</div></div>").join("")
+      : '<div class="item-sub">No notes yet.</div>';
+  } catch (e) {
+    if ($("cnList")) $("cnList").textContent = "Could not load notes: " + errText(e);
+  }
+}
+
 async function patientDetail(id) {
-  const p = patients[id];
-  if (!p) return;
+  let p = patients[id];
+  if (!p) {
+    try {
+      const s = await get(ref(db, "patients/" + id));
+      p = s.val();
+    } catch (e) { toast("Could not load: " + errText(e)); return; }
+    if (!p) { toast("Patient not found."); return; }
+    patients[id] = p;
+  }
+  const canNotes = me.role === "doctor" || me.role === "admin";
   openSheet("Patient " + id,
     '<div class="card"><div class="item-name">' + esc(p.name) + '</div>' +
     '<div class="item-sub">Patient ID: ' + esc(id) + "</div>" +
     '<div class="item-sub">Phone: ' + esc(p.phone) + " | Age: " + esc(p.age) + "</div>" +
-    '<div class="item-sub">Registered: ' + esc(p.registeredAt ? fmtDate(new Date(p.registeredAt).getFullYear() + "-" + pad2(new Date(p.registeredAt).getMonth() + 1) + "-" + pad2(new Date(p.registeredAt).getDate())) : "") + "</div>" +
+    '<div class="item-sub">Registered: ' + esc(p.registeredAt ? fmtDate(ymd(new Date(p.registeredAt))) : "") + "</div>" +
     (canBook() ? '<div class="btnrow"><button class="sm" id="histNew">+ New appointment</button></div>' : "") + "</div>" +
     '<div class="card"><div class="item-name">Upcoming appointments</div><div id="histUp">Loading...</div></div>' +
-    '<div class="card"><div class="item-name">Previous appointments</div><div id="histPrev">Loading...</div></div>');
+    '<div class="card"><div class="item-name">Previous appointments</div><div id="histPrev">Loading...</div></div>' +
+    (canNotes ? '<div class="card"><div class="item-name" style="margin-bottom:10px">Consultation notes</div>' +
+      (me.role === "doctor" ? '<textarea id="cnText" maxlength="1000" placeholder="Write your note for this visit"></textarea>' +
+        '<button class="btn" id="cnSave">Save note</button><div class="formmsg" id="formMsg"></div><div style="height:12px"></div>' : "") +
+      '<div id="cnList">Loading...</div></div>' : ""));
   if (canBook()) $("histNew").onclick = () => apptForm(id);
+  if (canNotes) {
+    loadNotes(id);
+    if (me.role === "doctor") {
+      $("cnSave").onclick = async () => {
+        const msg = $("formMsg");
+        msg.style.display = "none";
+        const text = $("cnText").value.trim();
+        if (!text) { msg.textContent = "Please write the note first."; msg.style.display = "block"; return; }
+        $("cnSave").disabled = true;
+        $("cnSave").textContent = "Saving...";
+        try {
+          await set(push(ref(db, "consultations")), {
+            patientId: id, patientName: p.name, doctorId: me.doctorId || "", doctorName: me.name,
+            date: today(), notes: text, createdAt: Date.now(), createdBy: me.uid
+          });
+          $("cnText").value = "";
+          toast("Note saved");
+          await loadNotes(id);
+        } catch (e) {
+          msg.textContent = "Could not save: " + errText(e);
+          msg.style.display = "block";
+        }
+        if ($("cnSave")) { $("cnSave").disabled = false; $("cnSave").textContent = "Save note"; }
+      };
+    }
+  }
   try {
     await loadAppts();
   } catch (e) {
@@ -1271,6 +1400,8 @@ function drawAppts() {
         btns += '<button class="sm danger" data-act="Cancelled" data-id="' + esc(a.id) + '">Cancel</button>';
       }
       btns += '<button class="sm gray" data-act="slip" data-id="' + esc(a.id) + '">Slip</button>';
+    } else if (me.role === "doctor") {
+      btns += '<button class="sm" data-act="record" data-id="' + esc(a.id) + '">Patient record</button>';
     }
     html += '<div class="card"><div class="arow"><div class="tokbadge"><small>TOKEN</small>' + esc(a.token) + "</div>" +
       '<div class="abody"><div class="item-top"><div class="item-name">' + esc(a.patientName) + "</div>" +
@@ -1287,6 +1418,7 @@ function drawAppts() {
 async function apptAction(act, id) {
   const a = appts[id];
   if (!a) return;
+  if (act === "record") { patientDetail(a.patientId); return; }
   if (act === "slip") { printSlip(Object.assign({ id: id }, a)); return; }
   if (act === "Cancelled" && !confirm("Cancel this appointment? The token number will not be used again.")) return;
   try {
@@ -1358,6 +1490,8 @@ function drawTokens() {
       if (canBook() && a.status !== "Cancelled" && a.status !== "Completed") {
         if (a.status !== "Arrived") btns += '<button class="sm" data-act="Arrived" data-id="' + esc(a.id) + '">Arrived</button>';
         btns += '<button class="sm green" data-act="Completed" data-id="' + esc(a.id) + '">Completed</button>';
+      } else if (me.role === "doctor" && a.status !== "Cancelled") {
+        btns += '<button class="sm" data-act="record" data-id="' + esc(a.id) + '">Patient record</button>';
       }
       html += '<div class="trow' + (a.status === "Cancelled" ? " cx" : "") + '"><div class="tnum">' + esc(a.token) + '</div>' +
         '<div class="tinfo"><div class="item-name" style="font-size:15px">' + esc(a.patientName) + '</div><div class="item-sub" style="margin:0">ID ' + esc(a.patientId) + '</div></div>' +
@@ -1628,7 +1762,10 @@ async function renderSettings() {
     '<button class="btn" id="hsSave">Save settings</button><div class="formmsg" id="formMsg"></div></div>' +
     '<div class="card"><div class="item-name" style="margin-bottom:6px">Backup</div>' +
     '<div class="item-sub">Download all hospital data as one file. Keep it safe. It has private patient data.</div>' +
-    '<div style="height:10px"></div><button class="btn green" id="bkBtn">Download backup</button></div>';
+    '<div style="height:10px"></div><button class="btn green" id="bkBtn">Download backup</button></div>' +
+    '<div class="card"><div class="item-name" style="margin-bottom:6px">Privacy and Terms</div>' +
+    '<div class="item-sub">Read the privacy policy and terms of use.</div>' +
+    '<div style="height:10px"></div><button class="btn gray" id="lgBtn">Open Privacy and Terms</button></div>';
   let logo = hospital.logo || "";
   $("hsName").value = hospital.name;
   $("hsAddr").value = hospital.address;
@@ -1665,6 +1802,7 @@ async function renderSettings() {
     $("hsSave").textContent = "Save settings";
   };
   $("bkBtn").onclick = backupNow;
+  $("lgBtn").onclick = openLegal;
 }
 
 async function backupNow() {
@@ -1703,340 +1841,144 @@ async function backupNow() {
   btn.textContent = "Download backup";
 }
 
-/* ----- Follow-ups ----- */
-async function renderFollowups() {
+/* ----- Staff Management ----- */
+async function renderStaff() {
   const c = $("content");
-  if (!$("fuList")) {
-    try { await loadData(); } catch (e) { /* ignore */ }
-    if (currentPage() !== "followups") return;
-    c.innerHTML =
-      '<button class="btn" id="addFu">+ Add follow-up</button><div style="height:14px"></div>' +
-      '<input id="fuSearch" type="search" placeholder="Search by Patient ID or name">' +
-      '<label for="fuStatus">Status</label><select id="fuStatus"><option value="">All</option><option>Upcoming</option><option>Overdue</option><option>Arrived</option></select>' +
-      '<div id="fuList"><div class="card empty">Loading...</div></div>';
-    $("addFu").onclick = () => fuForm(null);
-    $("fuSearch").value = fuF.q;
-    $("fuStatus").value = fuF.status;
-    $("fuSearch").oninput = () => { fuF.q = $("fuSearch").value; drawFollowups(); };
-    $("fuStatus").onchange = () => { fuF.status = $("fuStatus").value; drawFollowups(); };
-  }
   try {
-    await loadFollowups();
+    const r = await Promise.all([get(ref(db, "users")), loadData()]);
+    staffList = r[0].val() || {};
   } catch (e) {
-    if (currentPage() !== "followups" || !$("fuList")) return;
-    $("fuList").innerHTML = '<div class="card empty">Could not load: ' + esc(errText(e)) + "</div>";
+    if (currentPage() !== "staff") return;
+    c.innerHTML = '<div class="card soon"><p>Could not load: ' + esc(errText(e)) + "</p></div>";
     return;
   }
-  if (currentPage() !== "followups") return;
-  drawFollowups();
-}
-
-function drawFollowups() {
-  const box = $("fuList");
-  if (!box) return;
-  const q = fuF.q.trim().toLowerCase();
-  let list = Object.keys(followups).map((k) => Object.assign({ id: k }, followups[k]));
-  list.forEach((f) => { f.shown = fuStatus(f); });
-  const total = list.length;
-  if (fuF.status) list = list.filter((f) => f.shown === fuF.status);
-  if (q) list = list.filter((f) => String(f.patientId).indexOf(q) >= 0 || String(f.patientName || "").toLowerCase().indexOf(q) >= 0);
-  list.sort((a, b) => {
-    const aa = a.shown === "Arrived" ? 1 : 0;
-    const bb = b.shown === "Arrived" ? 1 : 0;
-    return aa - bb || String(a.date).localeCompare(String(b.date));
+  if (currentPage() !== "staff") return;
+  const list = Object.keys(staffList).map((id) => Object.assign({ id: id }, staffList[id]))
+    .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
+  let html = '<button class="btn" id="addStaff">+ Add staff</button><div style="height:14px"></div>' +
+    '<div class="item-sub" style="margin:0 4px 12px">Role colours: ' + rolePillHtml("admin") + " " + rolePillHtml("receptionist") + " " + rolePillHtml("doctor") + "</div>";
+  list.forEach((u) => {
+    const on = u.active === true;
+    const dn = u.doctorId && doctors[u.doctorId] ? doctors[u.doctorId].name : "";
+    html += '<div class="card"><div class="item-top"><div class="item-name">' + esc(u.name || "No name") + (u.id === me.uid ? " (you)" : "") + "</div>" +
+      rolePillHtml(u.role) + "</div>" +
+      '<div class="item-sub">' + esc(u.email || "Email not saved") + "</div>" +
+      (u.role === "doctor" ? '<div class="item-sub">Linked doctor: ' + esc(dn || "Not linked") + "</div>" : "") +
+      '<div class="item-top" style="margin-top:6px"><span class="st ' + (on ? "st-on" : "st-off") + '">' + (on ? "Active" : "Turned off") + "</span></div>" +
+      '<div class="btnrow"><button class="sm" data-act="edit" data-id="' + esc(u.id) + '">Edit</button>' +
+      (u.id === me.uid ? "" : '<button class="sm gray" data-act="toggle" data-id="' + esc(u.id) + '">' + (on ? "Turn off" : "Turn on") + "</button>") +
+      "</div></div>";
   });
-  if (!list.length) {
-    box.innerHTML = '<div class="card empty">' + (total ? "No follow-ups found." : "No follow-ups yet.<br>Tap \"Add follow-up\" to make one.") + "</div>";
-    return;
-  }
-  let html = '<div class="item-sub" style="margin:0 4px 10px">' + list.length + " follow-up(s)</div>";
-  list.forEach((f) => {
-    let btns = "";
-    if (f.shown === "Arrived") {
-      btns = '<div class="item-sub">Appointment was made when the patient arrived.</div>';
-    } else {
-      btns = '<div class="btnrow">' +
-        '<button class="sm green" data-act="arrive" data-id="' + esc(f.id) + '">Confirm Arrival</button>' +
-        '<button class="sm" data-act="edit" data-id="' + esc(f.id) + '">Edit</button>' +
-        '<button class="sm danger" data-act="del" data-id="' + esc(f.id) + '">Delete</button></div>';
-    }
-    html += '<div class="card"><div class="item-top"><div class="item-name">' + esc(f.patientName) + "</div>" +
-      '<span class="st ' + stClass(f.shown) + '">' + esc(f.shown) + "</span></div>" +
-      '<div class="item-sub">ID ' + esc(f.patientId) + " | " + esc(f.phone) + "</div>" +
-      '<div class="item-sub">' + esc(f.doctorName) + " | " + esc(f.departmentName || "") + "</div>" +
-      '<div class="item-sub">Follow-up date: <b>' + esc(fmtDate(f.date)) + "</b></div>" +
-      (f.notes ? '<div class="item-sub">Notes: ' + esc(f.notes) + "</div>" : "") + btns + "</div>";
-  });
-  box.innerHTML = html;
-  box.querySelectorAll("button[data-act]").forEach((b) => { b.onclick = () => fuAction(b.dataset.act, b.dataset.id); });
+  c.innerHTML = html;
+  $("addStaff").onclick = () => staffForm(null);
+  c.querySelectorAll("button[data-act]").forEach((b) => { b.onclick = () => staffAction(b.dataset.act, b.dataset.id); });
 }
 
-async function fuAction(act, id) {
-  const f = followups[id];
-  if (!f) return;
-  if (act === "edit") { fuForm(id); return; }
-  if (act === "del") {
-    if (!confirm("Delete this follow-up?")) return;
-    try {
-      await remove(ref(db, "followups/" + id));
-      toast("Follow-up deleted");
-      await renderFollowups();
-    } catch (e) {
-      toast("Error: " + errText(e));
-    }
-    return;
-  }
-  if (act === "arrive") await fuArrive(id);
-}
-
-async function fuArrive(id) {
-  const f = followups[id];
-  const d = doctors[f.doctorId];
-  if (!d) { toast("This doctor was deleted. Edit the follow-up and choose another doctor."); return; }
-  if (d.active === false) { toast("This doctor is turned off. Edit the follow-up first."); return; }
-  if (!confirm("Confirm arrival for " + f.patientName + "? A new appointment for today will be made.")) return;
-  const date = today();
-  let claimed = false;
-  let made = false;
+async function staffAction(act, id) {
+  const u = staffList[id];
+  if (!u) return;
+  if (act === "edit") { staffForm(id); return; }
+  if (id === me.uid) { toast("You cannot turn off your own account."); return; }
+  const on = u.active === true;
+  if (on && !confirm("Turn off " + (u.name || "this account") + "? They will not be able to use the app.")) return;
   try {
-    const cr = await runTransaction(ref(db, "followups/" + id + "/status"), (cur) => (cur === "Arrived" ? undefined : "Arrived"));
-    if (!cr.committed) {
-      toast("This follow-up was already confirmed.");
-      await renderFollowups();
-      return;
-    }
-    claimed = true;
-    const ps = await get(ref(db, "patients/" + f.patientId));
-    const p = ps.val() || { name: f.patientName, phone: f.phone, age: f.age };
-    const tr = await runTransaction(ref(db, "counters/tokens/" + date + "/" + f.doctorId), (cur) => (cur || 0) + 1);
-    const token = tr.snapshot.val();
-    const aref = push(ref(db, "appointments"));
-    const a = {
-      patientId: f.patientId, patientName: p.name, phone: p.phone, age: p.age,
-      doctorId: f.doctorId, doctorName: d.name, departmentId: d.departmentId,
-      departmentName: departments[d.departmentId] ? departments[d.departmentId].name : "",
-      date: date, token: token, fee: Number(d.fee || 0),
-      status: "Arrived", paymentStatus: "Unpaid", createdAt: Date.now(), createdBy: me.uid,
-      fromFollowup: id
-    };
-    await set(aref, a);
-    made = true;
-    a.id = aref.key;
-    try {
-      await update(ref(db, "followups/" + id), { appointmentId: aref.key, arrivedAt: Date.now() });
-    } catch (e2) { /* appointment is saved; this extra note is not important */ }
-    openSheet("Arrival confirmed",
-      '<div class="card okbox"><div class="tick">&#10003;</div><h3>Arrival confirmed</h3>' +
-      '<div class="item-name">' + esc(a.patientName) + "</div>" +
-      '<div class="item-sub">Patient ID: <b>' + esc(a.patientId) + "</b></div>" +
-      '<div class="item-sub">' + esc(a.doctorName) + " | " + esc(a.departmentName) + "</div>" +
-      '<div class="item-sub">' + esc(fmtDate(a.date)) + " | Fee: Rs " + esc(a.fee) + "</div>" +
-      '<div class="tokenshow">Token ' + esc(a.token) + "</div>" +
-      '<button class="btn green" id="okPrint">Print Slip</button><div style="height:10px"></div>' +
-      '<button class="btn gray" id="okClose">Close</button></div>');
-    $("okPrint").onclick = () => printSlip(a);
-    $("okClose").onclick = closeSheetByButton;
+    await update(ref(db, "users/" + id), { active: !on });
+    toast(on ? "Account turned off" : "Account turned on");
+    await renderStaff();
   } catch (e) {
-    if (claimed && !made) {
-      try { await update(ref(db, "followups/" + id), { status: "Upcoming" }); } catch (e3) { /* ignore */ }
-    }
     toast("Error: " + errText(e));
-    try { await renderFollowups(); } catch (e4) { /* ignore */ }
   }
 }
 
-function fuForm(id) {
-  const f = id ? followups[id] : null;
-  const docs = listOf(doctors).filter((d) => d.active !== false || (f && d.id === f.doctorId));
-  if (docs.length === 0) { toast("Please add an active doctor first."); return; }
-  let opts = '<option value="">Choose doctor</option>';
-  docs.forEach((d) => { opts += '<option value="' + esc(d.id) + '">' + esc(d.name) + " - " + esc(d.specialty || "") + (d.active === false ? " (off)" : "") + "</option>"; });
-  openSheet(id ? "Edit follow-up" : "Add follow-up",
+function staffForm(id) {
+  const u = id ? staffList[id] : { name: "", email: "", role: "receptionist", doctorId: "", active: true };
+  const self = id === me.uid;
+  let docOpts = '<option value="">Choose doctor</option>';
+  listOf(doctors).forEach((d) => { docOpts += '<option value="' + esc(d.id) + '">' + esc(d.name) + " - " + esc(d.specialty || "") + "</option>"; });
+  openSheet(id ? "Edit staff" : "Add staff",
     '<div class="card">' +
-    '<label for="fPid">Patient ID</label>' +
-    '<div class="rowbtn"><input id="fPid" type="text" inputmode="numeric" maxlength="6" placeholder="Example: 000001"><button class="sm" id="findBtn" type="button">Find</button></div>' +
-    '<div class="note" id="pidMsg"></div>' +
-    '<label for="fPname">Patient name</label><input id="fPname" type="text" readonly placeholder="Shown after you find the patient">' +
-    '<label for="fDoc">Doctor</label><select id="fDoc">' + opts + "</select>" +
-    '<label for="fDate">Follow-up date</label><input id="fDate" type="date">' +
-    '<label for="fNotes">Notes</label><textarea id="fNotes" maxlength="300" placeholder="Example: Come back with blood test report"></textarea>' +
-    '<button class="btn" id="saveBtn">Save Follow-up</button><div class="formmsg" id="formMsg"></div></div>');
-
-  let loaded = null;
-  if (f) {
-    loaded = { id: f.patientId, name: f.patientName, phone: f.phone, age: f.age };
-    $("fPid").value = f.patientId;
-    $("fPid").readOnly = true;
-    $("findBtn").style.display = "none";
-    $("fPname").value = f.patientName;
-    $("fDoc").value = f.doctorId;
-    $("fDate").value = f.date;
-    $("fNotes").value = f.notes || "";
-  } else {
-    $("fDate").min = today();
-  }
-
-  function setPidMsg(text, kind) {
-    if (!$("pidMsg")) return;
-    $("pidMsg").textContent = text;
-    $("pidMsg").className = "note " + (kind || "");
-  }
-  async function loadPatient() {
-    const digits = $("fPid").value.replace(/\D/g, "");
-    if (!digits) return;
-    const pid = digits.padStart(6, "0");
-    $("fPid").value = pid;
-    setPidMsg("Looking for patient...", "");
-    try {
-      const s = await get(ref(db, "patients/" + pid));
-      if (!$("fPid") || $("fPid").value !== pid) return;
-      if (s.exists()) {
-        loaded = Object.assign({ id: pid }, s.val());
-        $("fPname").value = loaded.name || "";
-        setPidMsg("Patient found.", "ok");
-      } else {
-        loaded = null;
-        $("fPname").value = "";
-        setPidMsg("No patient with this ID.", "bad");
-      }
-    } catch (e) {
-      if ($("pidMsg")) setPidMsg("Could not search: " + errText(e), "bad");
-    }
-  }
-  if (!f) {
-    $("fPid").oninput = () => {
-      const v = $("fPid").value.replace(/\D/g, "");
-      $("fPid").value = v;
-      if (loaded && v !== loaded.id) { loaded = null; $("fPname").value = ""; }
-      if (!v) setPidMsg("", "");
-      if (v.length === 6) loadPatient();
-    };
-    $("findBtn").onclick = () => {
-      if (!$("fPid").value.trim()) { setPidMsg("Type a Patient ID first.", "bad"); return; }
-      loadPatient();
+    '<label for="sName">Full name</label><input id="sName" type="text" maxlength="60" placeholder="Example: Sara Khan">' +
+    '<label for="sEmail">Email (used to log in)</label><input id="sEmail" type="email" placeholder="name@example.com">' +
+    (id ? "" : '<label for="sPass">Password (at least 6 letters)</label><input id="sPass" type="text" autocomplete="off" placeholder="Choose a password">') +
+    '<label for="sRole">Role</label><select id="sRole"><option value="receptionist">Receptionist (green)</option><option value="doctor">Doctor (blue)</option><option value="admin">Admin (purple)</option></select>' +
+    '<div id="sDocBox"><label for="sDoc">Linked doctor</label><select id="sDoc">' + docOpts + "</select></div>" +
+    '<label for="sActive">Status</label><select id="sActive"><option value="1">Active</option><option value="0">Turned off</option></select>' +
+    (self ? '<div class="note">This is your own account. You cannot change your role or turn it off.</div>' : "") +
+    '<button class="btn" id="saveBtn">Save</button><div class="formmsg" id="formMsg"></div>' +
+    (id && u.email ? '<div style="height:10px"></div><button class="btn gray" id="resetBtn">Send password reset email</button>' : "") +
+    "</div>");
+  $("sName").value = u.name || "";
+  $("sEmail").value = u.email || "";
+  if (id) $("sEmail").readOnly = true;
+  $("sRole").value = ALL.indexOf(u.role) >= 0 ? u.role : "receptionist";
+  $("sDoc").value = u.doctorId || "";
+  $("sActive").value = u.active === true ? "1" : "0";
+  if (self) { $("sRole").disabled = true; $("sActive").disabled = true; }
+  function syncDoc() { $("sDocBox").style.display = $("sRole").value === "doctor" ? "block" : "none"; }
+  syncDoc();
+  $("sRole").onchange = syncDoc;
+  if ($("resetBtn")) {
+    $("resetBtn").onclick = async () => {
+      try { await sendPasswordResetEmail(auth, u.email); toast("Reset email sent"); }
+      catch (e) { toast("Error: " + errText(e)); }
     };
   }
-
   $("saveBtn").onclick = async () => {
     const msg = $("formMsg");
     msg.style.display = "none";
-    const did = $("fDoc").value;
-    const date = $("fDate").value;
-    const notes = $("fNotes").value.trim();
+    const name = $("sName").value.trim();
+    const email = $("sEmail").value.trim();
+    const role = $("sRole").value;
+    const doctorId = role === "doctor" ? $("sDoc").value : "";
+    const active = $("sActive").value === "1";
+    const pass = id ? "" : $("sPass").value;
     let problem = "";
-    if (!loaded) problem = "Please find the patient first. Type the Patient ID.";
-    else if (!did) problem = "Please choose a doctor.";
-    else if (!date) problem = "Please choose the follow-up date.";
-    else if (date < today() && !(f && f.date === date)) problem = "The date cannot be in the past.";
+    if (!name) problem = "Please type the name.";
+    else if (!id && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) problem = "Please type a correct email.";
+    else if (!id && pass.length < 6) problem = "The password needs at least 6 letters.";
+    else if (role === "doctor" && !doctorId) problem = "Please choose the linked doctor. If the list is empty, add the doctor first.";
     if (problem) { msg.textContent = problem; msg.style.display = "block"; return; }
-    const d = doctors[did];
-    const data = {
-      doctorId: did, doctorName: d.name, departmentId: d.departmentId,
-      departmentName: departments[d.departmentId] ? departments[d.departmentId].name : "",
-      date: date, notes: notes
-    };
     $("saveBtn").disabled = true;
     $("saveBtn").textContent = "Saving...";
     try {
-      if (f) {
-        await update(ref(db, "followups/" + id), data);
+      if (id) {
+        const data = { name: name, doctorId: doctorId };
+        if (!self) { data.role = role; data.active = active; }
+        await update(ref(db, "users/" + id), data);
       } else {
-        data.patientId = loaded.id;
-        data.patientName = loaded.name;
-        data.phone = loaded.phone || "";
-        data.age = loaded.age != null ? loaded.age : "";
-        data.status = "Upcoming";
-        data.createdAt = Date.now();
-        data.createdBy = me.uid;
-        await set(push(ref(db, "followups")), data);
+        let uid = "";
+        try {
+          const cred = await createUserWithEmailAndPassword(auth2, email, pass);
+          uid = cred.user.uid;
+        } catch (e) {
+          let t = "Could not create the login: " + errText(e);
+          if (e.code === "auth/email-already-in-use") t = "This email already has a login.";
+          if (e.code === "auth/weak-password") t = "The password is too weak.";
+          if (e.code === "auth/invalid-email") t = "The email is not correct.";
+          throw new Error(t);
+        }
+        try { await signOut(auth2); } catch (e) { /* ignore */ }
+        try {
+          await set(ref(db, "users/" + uid), {
+            name: name, email: email, role: role, doctorId: doctorId, active: active, createdAt: Date.now()
+          });
+        } catch (e) {
+          throw new Error("The login was made but the role was not saved (" + errText(e) + "). UID: " + uid);
+        }
       }
       closeSheetByButton();
-      toast("Follow-up saved");
+      toast("Saved");
+      if (currentPage() === "staff") await renderStaff();
     } catch (e) {
-      msg.textContent = "Could not save: " + errText(e);
+      msg.textContent = e.message || "Could not save.";
       msg.style.display = "block";
       $("saveBtn").disabled = false;
-      $("saveBtn").textContent = "Save Follow-up";
+      $("saveBtn").textContent = "Save";
     }
   };
 }
 
-/* ---------- events ---------- */
-$("menuBtn").onclick = openDrawer;
-$("overlay").onclick = closeDrawerByButton;
-$("sheetBack").onclick = closeSheetByButton;
-$("logoutBtn").onclick = async () => {
-  if (confirm("Do you want to log out?")) {
-    await signOut(auth);
-  }
-};
-
-async function doLogin() {
-  const email = $("email").value.trim();
-  const password = $("password").value;
-  const box = $("loginMsg");
-  box.style.display = "none";
-  if (!email || !password) {
-    box.textContent = "Please type your email and password.";
-    box.style.display = "block";
-    return;
-  }
-  $("loginBtn").disabled = true;
-  $("loginBtn").textContent = "Please wait...";
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch (e) {
-    let text = "Login failed. Please try again.";
-    if (e.code === "auth/invalid-credential" || e.code === "auth/wrong-password" || e.code === "auth/user-not-found" || e.code === "auth/invalid-email") {
-      text = "Wrong email or password.";
-    } else if (e.code === "auth/network-request-failed") {
-      text = "No internet. Please check your connection.";
-    } else if (e.code === "auth/too-many-requests") {
-      text = "Too many tries. Please wait a few minutes.";
-    } else {
-      text = "ERROR: " + e.code;
-    }
-    box.textContent = text;
-    box.style.display = "block";
-    $("loginBtn").disabled = false;
-    $("loginBtn").textContent = "Log in";
-  }
-}
-$("loginBtn").onclick = doLogin;
-$("password").addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); });
-
-/* ---------- start: check who is logged in ---------- */
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    showLogin();
-    return;
-  }
-  try {
-    const snap = await get(ref(db, "users/" + user.uid));
-    const u = snap.exists() ? snap.val() : null;
-    if (!u) {
-      pendingMsg = "Your account has no role yet. Ask the Admin.";
-      await signOut(auth);
-      return;
-    }
-    if (u.active !== true) {
-      pendingMsg = "Your account is turned off. Ask the Admin.";
-      await signOut(auth);
-      return;
-    }
-    if (!ALL.includes(u.role)) {
-      pendingMsg = "Your role is not valid. Ask the Admin.";
-      await signOut(auth);
-      return;
-    }
-    me = { uid: user.uid, name: u.name || "User", role: u.role, doctorId: u.doctorId || "" };
-    try { await loadSettings(); } catch (e) { /* use default name */ }
-    showApp();
-  } catch (e) {
-    pendingMsg = "Could not load your account: " + e.code;
-    await signOut(auth);
-  }
-});
-</script>
-</body>
-</html>
+/* ----- Reports ----- */
+function barChart(items, color) {
+  let max = 1;
+  items.forEach((i) => { if (i.v > max)

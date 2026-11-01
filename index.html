@@ -112,6 +112,7 @@
   .s-upcoming { background: #ede9fe; color: #5b21b6; }
   .s-overdue { background: #fee2e2; color: #991b1b; }
   .btnrow { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .btnrow.tight { margin: 0 0 14px; }
   .sm { flex: 1; min-width: 90px; padding: 12px 10px; border: 0; border-radius: 10px; background: #dbeafe; color: var(--blue-dark); font-size: 14px; font-weight: bold; }
   .sm.danger { background: #fee2e2; color: #991b1b; }
   .sm.gray { background: #e2e8f0; color: #334155; }
@@ -136,6 +137,8 @@
   .note { font-size: 13px; color: var(--muted); margin: 0 2px 14px; min-height: 4px; }
   .note.ok { color: #166534; font-weight: bold; }
   .note.bad { color: #991b1b; font-weight: bold; }
+  .prev { background: #f1f5f9; border-radius: 12px; padding: 10px 12px; margin: 0 0 16px; }
+  .prev .item-sub { margin-bottom: 2px; }
   .tokenshow { background: #dbeafe; color: var(--blue-dark); border-radius: 12px; text-align: center; font-size: 34px; font-weight: bold; padding: 12px; margin-bottom: 6px; }
   .okbox { text-align: center; }
   .okbox .tick { width: 64px; height: 64px; border-radius: 50%; background: #dcfce7; color: #166534; font-size: 36px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; }
@@ -284,7 +287,7 @@ let appts = {};
 let followups = {};
 let apptF = { q: "", date: "", doctor: "", status: "" };
 let fuF = { q: "", status: "" };
-let patQ = "";
+let patF = { q: "", from: "", to: "", doctor: "" };
 
 /* ---------- small helpers ---------- */
 function toast(text) {
@@ -381,7 +384,7 @@ function showApp() {
   $("avatar").textContent = me.name.charAt(0).toUpperCase();
   apptF = { q: "", date: today(), doctor: "", status: "" };
   fuF = { q: "", status: "" };
-  patQ = "";
+  patF = { q: "", from: "", to: "", doctor: "" };
   buildMenu();
   navStack = ["dashboard"];
   render("dashboard");
@@ -782,21 +785,44 @@ function doctorForm(id) {
   };
 }
 
-/* ----- Patients ----- */
+/* ----- Patients (visit history) ----- */
 async function renderPatients() {
   const c = $("content");
   if (!$("patList")) {
+    try { await loadData(); } catch (e) { /* ignore */ }
+    if (currentPage() !== "patients") return;
+    let dopts = '<option value="">All doctors</option>';
+    listOf(doctors).forEach((d) => { dopts += '<option value="' + esc(d.id) + '">' + esc(d.name) + "</option>"; });
     c.innerHTML =
-      (canBook() ? '<button class="btn" id="newApptBtn">+ New appointment</button><div style="height:14px"></div>' : "") +
       '<input id="patSearch" type="search" placeholder="Search by ID, name or phone">' +
+      '<div class="two"><div><label for="patFrom">From date</label><input id="patFrom" type="date"></div>' +
+      '<div><label for="patTo">To date</label><input id="patTo" type="date"></div></div>' +
+      (me.role !== "doctor" ? '<label for="patDoc">Doctor</label><select id="patDoc">' + dopts + "</select>" : "") +
+      '<div class="btnrow tight"><button class="sm" id="patToday">Today</button><button class="sm gray" id="patAll">All dates</button></div>' +
       '<div id="patList"><div class="card empty">Loading...</div></div>';
-    if (canBook()) $("newApptBtn").onclick = () => apptForm("");
-    $("patSearch").value = patQ;
-    $("patSearch").oninput = () => { patQ = $("patSearch").value; drawPatients(); };
+    $("patSearch").value = patF.q;
+    $("patFrom").value = patF.from;
+    $("patTo").value = patF.to;
+    if ($("patDoc")) $("patDoc").value = patF.doctor;
+    $("patSearch").oninput = () => { patF.q = $("patSearch").value; drawPatients(); };
+    $("patFrom").onchange = () => { patF.from = $("patFrom").value; drawPatients(); };
+    $("patTo").onchange = () => { patF.to = $("patTo").value; drawPatients(); };
+    if ($("patDoc")) $("patDoc").onchange = () => { patF.doctor = $("patDoc").value; drawPatients(); };
+    $("patToday").onclick = () => {
+      patF.from = today(); patF.to = today();
+      $("patFrom").value = patF.from; $("patTo").value = patF.to;
+      drawPatients();
+    };
+    $("patAll").onclick = () => {
+      patF.from = ""; patF.to = "";
+      $("patFrom").value = ""; $("patTo").value = "";
+      drawPatients();
+    };
   }
   try {
-    const s = await get(ref(db, "patients"));
-    patients = s.val() || {};
+    const r = await Promise.all([get(ref(db, "patients")), get(ref(db, "appointments"))]);
+    patients = r[0].val() || {};
+    appts = r[1].val() || {};
   } catch (e) {
     if (currentPage() !== "patients" || !$("patList")) return;
     $("patList").innerHTML = '<div class="card empty">Could not load: ' + esc(errText(e)) + "</div>";
@@ -809,25 +835,38 @@ async function renderPatients() {
 function drawPatients() {
   const box = $("patList");
   if (!box) return;
-  const q = patQ.trim().toLowerCase();
-  let list = Object.keys(patients).map((k) => Object.assign({ id: k }, patients[k]));
+  const q = patF.q.trim().toLowerCase();
+  let from = patF.from;
+  let to = patF.to;
+  if (from && to && from > to) { const tmp = from; from = to; to = tmp; }
+  let list = Object.keys(appts).map((k) => Object.assign({ id: k }, appts[k]));
+  list = list.filter((a) => a.status !== "Cancelled");
+  if (me.role === "doctor") list = list.filter((a) => a.doctorId === me.doctorId);
   const total = list.length;
+  if (from) list = list.filter((a) => a.date >= from);
+  if (to) list = list.filter((a) => a.date <= to);
+  if (patF.doctor) list = list.filter((a) => a.doctorId === patF.doctor);
   if (q) {
-    list = list.filter((p) => p.id.indexOf(q) >= 0 || String(p.name || "").toLowerCase().indexOf(q) >= 0 || String(p.phone || "").indexOf(q) >= 0);
+    list = list.filter((a) => String(a.patientId).indexOf(q) >= 0 || String(a.patientName || "").toLowerCase().indexOf(q) >= 0 || String(a.phone || "").indexOf(q) >= 0);
   }
-  list.sort((a, b) => b.id.localeCompare(a.id));
+  list.sort((a, b) => b.date.localeCompare(a.date) || String(a.doctorName).localeCompare(String(b.doctorName)) || b.token - a.token);
   if (!list.length) {
-    box.innerHTML = '<div class="card empty">' + (total ? "No patient found." : "No patients yet.<br>A patient is added when you make the first appointment.") + "</div>";
+    box.innerHTML = '<div class="card empty">' + (total ? "No visits found for this search." : "No visits yet.<br>Visits appear here after you save an appointment.") + "</div>";
     return;
   }
-  let html = '<div class="item-sub" style="margin:0 4px 10px">' + list.length + " patient(s)</div>";
-  list.slice(0, 100).forEach((p) => {
-    html += '<button class="card rowcard" data-id="' + esc(p.id) + '"><div class="item-top"><div class="item-name">' + esc(p.name) +
-      '</div><span class="st st-on">' + esc(p.id) + '</span></div><div class="item-sub">' + esc(p.phone) + " | Age " + esc(p.age) + "</div></button>";
+  const uniq = {};
+  list.forEach((a) => { uniq[a.patientId] = 1; });
+  let html = '<div class="item-sub" style="margin:0 4px 10px"><b>' + list.length + "</b> visit(s) | <b>" + Object.keys(uniq).length + "</b> patient(s)</div>";
+  list.slice(0, 150).forEach((a) => {
+    html += '<button class="card rowcard" data-pid="' + esc(a.patientId) + '"><div class="item-top"><div class="item-name">' + esc(a.patientName) +
+      '</div><span class="st st-on">' + esc(a.patientId) + "</span></div>" +
+      '<div class="item-sub"><b>' + esc(fmtDate(a.date)) + "</b> | " + esc(a.doctorName) + "</div>" +
+      '<div class="item-sub">Token ' + esc(a.token) + " | " + esc(a.phone) + " | Age " + esc(a.age) + '</div>' +
+      '<span class="st ' + stClass(a.status) + '">' + esc(a.status) + "</span></button>";
   });
-  if (list.length > 100) html += '<div class="empty">Showing the first 100. Use search to find others.</div>';
+  if (list.length > 150) html += '<div class="empty">Showing the first 150. Use the search or dates to narrow down.</div>';
   box.innerHTML = html;
-  box.querySelectorAll("button[data-id]").forEach((b) => { b.onclick = () => patientDetail(b.dataset.id); });
+  box.querySelectorAll("button[data-pid]").forEach((b) => { b.onclick = () => patientDetail(b.dataset.pid); });
 }
 
 function histRows(list) {
@@ -884,6 +923,7 @@ async function apptForm(prefillPid) {
     '<label for="fPid">Patient ID (leave empty for a new patient)</label>' +
     '<div class="rowbtn"><input id="fPid" type="text" inputmode="numeric" maxlength="6" placeholder="Example: 000001"><button class="sm" id="findBtn" type="button">Find</button></div>' +
     '<div class="note" id="pidMsg"></div>' +
+    '<div id="pidHist"></div>' +
     '<label for="fPname">Patient name</label><input id="fPname" type="text" maxlength="60" placeholder="Full name">' +
     '<label for="fPphone">Phone number</label><input id="fPphone" type="tel" maxlength="15" placeholder="03001234567">' +
     '<label for="fPage">Age</label><input id="fPage" type="number" inputmode="numeric" min="0" max="120" placeholder="Years">' +
@@ -912,9 +952,24 @@ async function apptForm(prefillPid) {
   function lockFields(lock) {
     ["fPname", "fPphone", "fPage"].forEach((i) => { $(i).readOnly = lock; });
   }
-  function unloadPatient() { loaded = null; lockFields(false); }
+  function clearHist() { if ($("pidHist")) $("pidHist").innerHTML = ""; }
+  function unloadPatient() { loaded = null; lockFields(false); clearHist(); }
   function clearPatientFields() {
     $("fPname").value = ""; $("fPphone").value = ""; $("fPage").value = "";
+  }
+
+  async function showPidHist(pid) {
+    try { await loadAppts(); } catch (e) { return; }
+    if (!$("pidHist") || !loaded || loaded.id !== pid) return;
+    const mine = Object.keys(appts).map((k) => appts[k])
+      .filter((a) => a.patientId === pid && a.status !== "Cancelled")
+      .sort((a, b) => b.date.localeCompare(a.date));
+    if (!mine.length) {
+      $("pidHist").innerHTML = '<div class="prev"><div class="item-sub">No visits yet.</div></div>';
+      return;
+    }
+    $("pidHist").innerHTML = '<div class="prev"><div class="item-sub"><b>Last visits (' + mine.length + " in total)</b></div>" +
+      mine.slice(0, 5).map((a) => '<div class="item-sub">' + esc(fmtDate(a.date)) + " | " + esc(a.doctorName) + " | Token " + esc(a.token) + "</div>").join("") + "</div>";
   }
 
   async function loadPatient() {
@@ -933,6 +988,7 @@ async function apptForm(prefillPid) {
         $("fPage").value = loaded.age != null ? loaded.age : "";
         lockFields(true);
         setPidMsg("Patient found. Choose the date and doctor.", "ok");
+        showPidHist(pid);
       } else {
         unloadPatient();
         setPidMsg("No patient with this ID.", "bad");
